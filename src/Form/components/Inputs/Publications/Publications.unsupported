@@ -1,0 +1,177 @@
+/**
+ * Created by nicolas.looschen@pikobytes.de on 9/15/21.
+ *
+ * This file is subject to the terms and conditions defined in
+ * file 'LICENSE.txt', which is part of this source code package.
+ */
+
+import React, { Fragment, useEffect, useRef, useState } from 'react';
+import {
+  createStyles,
+  Grid,
+  IconButton,
+  makeStyles,
+  TextField,
+  Theme,
+  Tooltip,
+} from '@material-ui/core';
+import { Add, LibraryBooks } from '@material-ui/icons';
+import { useRecoilValue } from 'recoil';
+import Cite from 'citation-js';
+
+import { translationFunctionState } from '../../../../structs/atoms';
+import { generateTranslate } from '../../../../util/translation';
+
+export const PUBLICATIONS_FIELD_SPACE = 'form:component.Publication';
+
+const useStyles = makeStyles((theme: Theme) =>
+  createStyles({
+    fullTextPublication: {
+      resize: 'none',
+    },
+  })
+);
+
+export const Publications = (props: any) => {
+  //props
+  const {
+    field: { helperText, label, placeholder },
+    formField,
+    variant,
+  } = props;
+  const { onChange, value } = formField;
+
+  // state
+  const classes = useStyles();
+  const [isValueImportable, setIsValueImportable] = useState(false);
+  const [publications, setPublications] = useState([]);
+  const t = useRecoilValue(translationFunctionState);
+  const translate = generateTranslate(t);
+
+  // refs
+  const inputRef = useRef<HTMLInputElement>(null);
+  const textFieldRef = useRef(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const parsedValueHolder = useRef<string | null>(null);
+
+  //
+  // Label section
+  //
+
+  const addButtonTooltip = translate(
+    `${PUBLICATIONS_FIELD_SPACE}.AddButton.tooltip`
+  );
+  const importButtonTooltip = translate(`${PUBLICATIONS_FIELD_SPACE}.import`);
+
+  //
+  // Handler section
+  //
+
+  const handleAddPublication = () => {
+    if (inputRef.current !== null) {
+      const newValue = JSON.stringify([
+        ...publications,
+        inputRef.current.value,
+      ]);
+
+      onChange(newValue);
+
+      inputRef.current.value = '';
+    }
+  };
+
+  const handleChange = () => {
+    if (timeoutRef.current !== null) {
+      clearTimeout(timeoutRef.current);
+    }
+
+    if (isValueImportable) {
+      setIsValueImportable(false);
+    }
+
+    timeoutRef.current = setTimeout(checkIfValueImportable, 250);
+  };
+
+  const handleImport = () => {
+    if (inputRef.current !== null && parsedValueHolder.current !== null) {
+      inputRef.current.value = parsedValueHolder.current;
+      setIsValueImportable(false);
+    }
+  };
+
+  const checkIfValueImportable = () => {
+    if (inputRef.current !== null && inputRef.current.value !== '') {
+      // try to get metadata from supplied value
+      try {
+        const citation = Cite(inputRef.current.value);
+        parsedValueHolder.current = citation.format('bibliography', {
+          template: 'apa',
+        });
+        setIsValueImportable(true);
+      } catch (e) {
+        setIsValueImportable(false);
+      }
+    }
+  };
+
+  //
+  // Effect section
+  //
+
+  // derive internal publication state from external value
+  useEffect(() => {
+    const newPublications =
+      value !== '' && value !== undefined ? JSON.parse(value) : [];
+
+    setPublications(newPublications);
+  }, [value]);
+
+  return (
+    <Fragment>
+      <Grid container spacing={2}>
+        <Grid item xs={12}>
+          <Grid alignItems="center" container spacing={1}>
+            <Grid item xs>
+              <TextField
+                className={classes.fullTextPublication}
+                fullWidth
+                onChange={handleChange}
+                helperText={helperText}
+                inputProps={{ ref: inputRef }}
+                InputProps={{
+                  endAdornment: (
+                    <div
+                      style={{ display: isValueImportable ? 'flex' : 'none' }}
+                    >
+                      <Tooltip title={importButtonTooltip}>
+                        <IconButton onClick={handleImport}>
+                          <LibraryBooks />
+                        </IconButton>
+                      </Tooltip>
+                    </div>
+                  ),
+                }}
+                InputLabelProps={{ shrink: true }}
+                label={label}
+                multiline
+                placeholder={placeholder}
+                ref={textFieldRef}
+                rows={4}
+                variant={variant}
+              />
+            </Grid>
+            <Grid item xs="auto">
+              <Tooltip title={addButtonTooltip}>
+                <IconButton className="button" onClick={handleAddPublication}>
+                  <Add />
+                </IconButton>
+              </Tooltip>
+            </Grid>
+          </Grid>
+        </Grid>
+      </Grid>
+    </Fragment>
+  );
+};
+
+export default Publications;

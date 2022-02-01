@@ -1,0 +1,309 @@
+/**
+ * Created by nicolas.looschen@pikobytes.de on 4/6/21.
+ *
+ * This file is subject to the terms and conditions defined in
+ * file 'LICENSE.txt', which is part of this source code package.
+ */
+import React, { useEffect, useRef, useState } from 'react';
+import ReactAutosuggest from 'react-autosuggest';
+import {
+  InputAdornment,
+  List,
+  ListItem,
+  ListItemText,
+  makeStyles,
+  Paper,
+  Popper,
+  TextField,
+} from '@material-ui/core';
+import { createStyles } from '@material-ui/styles';
+import { Theme } from '@material-ui/core/styles';
+import clsx from 'clsx';
+import { UseControllerReturn } from 'react-hook-form';
+
+import { genericPost } from '../../../util/api/generic';
+import { ISuggestionUploadAutosuggest } from '../../../components/SearchBar/Suggestions';
+import { EOperator, ESuggestionType } from '../../../typedefs/filtersearch';
+import LoadingIcon from '../../../components/LoadingIcon/LoadingIcon';
+import { IField } from '../../typedefs/IField';
+import { INDEX_URL } from '../../../util/api/urlDefinitions';
+import { buildWildcardQuery } from '../../../util/api/suggestion';
+
+const useStyles = makeStyles((theme: Theme) =>
+  createStyles({
+    root: {
+      '& .react-autosuggest__suggestions-list': {
+        listStyle: 'none',
+        padding: 0,
+        margin: 0,
+      },
+      '& .react-autosuggest__section-container--first': {
+        paddingTop: theme.spacing(2),
+      },
+      '& .react-autosuggest__suggestion--highlighted': {
+        backgroundColor: 'rgba(0,0,0,0.04)',
+      },
+    },
+    popper: ({ inputWidth }: { inputWidth: number }) => ({
+      width: inputWidth,
+      [theme.breakpoints.up('lg')]: {
+        marginTop: theme.spacing(0.25),
+        zIndex: 1200,
+      },
+      [theme.breakpoints.down('lg')]: {
+        width: `calc(100% - ${theme.spacing(4)}px)`,
+      },
+      zIndex: 2,
+    }),
+    suggestion: {
+      cursor: 'pointer',
+    },
+  })
+);
+
+/**
+ * Creates an upload suggestion from a specified value
+ * @param value
+ */
+export const createUploadSuggestion = (
+  value: string
+): ISuggestionUploadAutosuggest => {
+  return {
+    name: '_search',
+    type: ESuggestionType.Field,
+    operator: EOperator.WILDCARD,
+    icon: 'unknown',
+    value,
+  };
+};
+
+/**
+ * Returns the value for a suggestion
+ * @param suggestion
+ */
+const getSuggestionValue = (suggestion: any) => suggestion;
+
+/**
+ * Parses a suggestion supplied by the index into the internal representation
+ * @param suggestion
+ */
+const parseSuggestion = (suggestion: { key: string }) => {
+  return createUploadSuggestion(suggestion.key);
+};
+
+interface AutosuggestProps {
+  error?: { message: string; type: string };
+  formField: IField;
+  field: UseControllerReturn['field'];
+  variant?: 'standard' | 'outlined' | 'filled';
+}
+
+export default function Autosuggest(props: AutosuggestProps) {
+  const { error, field, formField, variant } = props;
+  const {
+    helperText,
+    key,
+    label,
+    placeholder,
+    maxNumberSuggests,
+    defaultSuggestions = [],
+  } = formField;
+  const { onChange } = field;
+
+  //
+  // state section
+  //
+
+  // refs
+  const fetchSuggestionTimeoutRef = useRef<ReturnType<
+    typeof setTimeout
+  > | null>(null);
+  const inputRootRef = useRef<HTMLInputElement | null>(null);
+  const loadingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // state
+  const [isLoading, setIsLoading] = useState(false);
+  const [suggestions, setSuggestions] = useState<
+    ISuggestionUploadAutosuggest[]
+  >(field.value === '' ? defaultSuggestions : []);
+
+  // derived state
+  const el = inputRootRef.current;
+  const classes = useStyles({
+    inputWidth: el !== null ? el.clientWidth : 583,
+  });
+  const isErroneous = error !== undefined;
+
+  async function queryFieldAutosuggestResults(value: string) {
+    return genericPost(
+      `${INDEX_URL}/_search`,
+      buildWildcardQuery(value, key, maxNumberSuggests),
+      (response: {
+        aggregations: { suggest: { buckets: Array<{ key: string }> } };
+      }) => {
+        handleFinishedFetchSuggestions(
+          response.aggregations.suggest.buckets.map(parseSuggestion)
+        );
+      },
+      undefined,
+      defaultSuggestions
+    );
+  }
+
+  //
+  // Handler section
+  //
+
+  /**
+   * Clears the selections
+   */
+  const handleClearSuggestions = (): void => {
+    setSuggestions([]);
+    setIsLoading(false);
+  };
+
+  /**
+   * Update loading state and update the suggestions
+   * @param suggestions
+   */
+  const handleFinishedFetchSuggestions = (
+    suggestions: ISuggestionUploadAutosuggest[]
+  ) => {
+    // clear loading timeout
+    if (loadingTimeoutRef.current !== null) {
+      clearTimeout(loadingTimeoutRef.current);
+    }
+    setIsLoading(false);
+    setSuggestions(suggestions);
+  };
+
+  /**
+   * Fetches the suggestions and handles the loading feedback
+   * @param e
+   */
+  const handleFetchSuggestions = (e: {
+    value: string;
+    reason: string;
+  }): void => {
+    const value = e.value;
+
+    // fetch the data remote with a time
+    if (fetchSuggestionTimeoutRef.current !== null) {
+      clearTimeout(fetchSuggestionTimeoutRef.current);
+    }
+
+    // Use a timeout to prevent fetching in case of a pending user interaction.
+    // After 400ms we expect the user interaction to has been ended
+
+    // for an empty input field set the default suggestions
+    if (value === '') {
+      fetchSuggestionTimeoutRef.current = setTimeout(() => {
+        if (loadingTimeoutRef.current !== null) {
+          clearTimeout(loadingTimeoutRef.current);
+        }
+
+        setSuggestions(defaultSuggestions);
+      }, 400);
+    } else {
+      // else fetch the suggestions from the index
+      fetchSuggestionTimeoutRef.current = setTimeout(() => {
+        if (loadingTimeoutRef.current !== null) {
+          clearTimeout(loadingTimeoutRef.current);
+        }
+        loadingTimeoutRef.current = setTimeout(() => {
+          setIsLoading(true);
+        }, 200);
+
+        queryFieldAutosuggestResults(value);
+      }, 400);
+    }
+  };
+
+  /**
+   * Sets the value of the input to the selected suggestion value
+   * @param e
+   * @param selectValue
+   */
+  const handleSuggestionSelect = (
+    e: any,
+    selectValue: {
+      method: string;
+      suggestion: ISuggestionUploadAutosuggest;
+    }
+  ): void => {
+    if (fetchSuggestionTimeoutRef.current !== null) {
+      clearTimeout(fetchSuggestionTimeoutRef.current);
+    }
+    setSuggestions([]);
+    onChange(selectValue.suggestion.value);
+  };
+
+  useEffect(() => {
+    // if there are no suggestions and the field is empty => set default suggestions
+    if (suggestions.length === 0 && field.value === '') {
+      setSuggestions(defaultSuggestions);
+    }
+  }, [field.value]);
+
+  return (
+    <ReactAutosuggest
+      getSuggestionValue={getSuggestionValue}
+      inputProps={{
+        ...field,
+      }}
+      onSuggestionsClearRequested={handleClearSuggestions}
+      onSuggestionsFetchRequested={handleFetchSuggestions}
+      onSuggestionSelected={handleSuggestionSelect}
+      renderInputComponent={(inputprops) => {
+        return (
+          // @ts-ignore
+          <TextField
+            error={isErroneous}
+            helperText={isErroneous ? error!.message : helperText}
+            placeholder={placeholder}
+            {...inputprops}
+            label={label}
+            fullWidth
+            InputProps={{
+              ref: inputRootRef,
+              endAdornment: isLoading && (
+                <InputAdornment position="start">
+                  <LoadingIcon radius={24} />
+                </InputAdornment>
+              ),
+            }}
+            InputLabelProps={{ shrink: true }}
+            variant={variant}
+          />
+        );
+      }}
+      renderSuggestion={(suggestion) => (
+        <ListItem component="div" dense className={classes.suggestion}>
+          <ListItemText
+            primaryTypographyProps={{ variant: 'body1' }}
+            primary={suggestion.value}
+          />
+        </ListItem>
+      )}
+      renderSuggestionsContainer={(options) =>
+        inputRootRef.current !== null &&
+        options.children !== null && (
+          <Popper
+            anchorEl={inputRootRef.current}
+            className={clsx(classes.popper, classes.root)}
+            open={true}
+            placement="bottom-start"
+          >
+            <Paper {...options.containerProps} square>
+              <List dense disablePadding>
+                {options.children}
+              </List>
+            </Paper>
+          </Popper>
+        )
+      }
+      shouldRenderSuggestions={() => true}
+      suggestions={suggestions}
+    />
+  );
+}

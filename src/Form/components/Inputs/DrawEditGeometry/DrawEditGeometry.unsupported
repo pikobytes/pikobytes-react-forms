@@ -1,0 +1,718 @@
+/**
+ * Created by nicolas.looschen@pikobytes.de on 03/11/20.
+ *
+ * This file is subject to the terms and conditions defined in
+ * file 'LICENSE.txt', which is part of this source code package.
+ */
+import React, { useCallback, useEffect, useState } from 'react';
+import { useRecoilValue } from 'recoil';
+import MyLocationIcon from '@material-ui/icons/MyLocation';
+// @ts-ignore
+import MapboxDraw from '@mapbox/mapbox-gl-draw/dist/mapbox-gl-draw';
+import {
+  alpha,
+  createStyles,
+  Divider,
+  Grid,
+  IconButton,
+  Theme,
+  Tooltip,
+  Typography,
+} from '@material-ui/core';
+import RoomIcon from '@material-ui/icons/Room';
+import DeleteIcon from '@material-ui/icons/Delete';
+import LinearScaleIcon from '@material-ui/icons/LinearScale';
+import PanoramaWideAngleIcon from '@material-ui/icons/PanoramaWideAngle';
+import RestoreIcon from '@material-ui/icons/Restore';
+import DoneIcon from '@material-ui/icons/Done';
+import { makeStyles } from '@material-ui/styles';
+import clsx from 'clsx';
+import { ControllerRenderProps, UseFormReturn } from 'react-hook-form';
+import { useThrottleCallback } from '@react-hook/throttle';
+import { MapMouseEvent } from 'maplibre-gl';
+
+import {
+  mapInstanceState,
+  translationFunctionState,
+} from '../../../../structs/atoms';
+import {
+  DRAW_EDIT_GEOMETRY_NAMESPACE,
+  eventHandlerParameter,
+  GEOMETRY_TYPES,
+  IGeometry,
+} from './typedef/types';
+import {
+  createFeatureFromPoint,
+  getDrawHandlerNameFromGeometryType,
+  handleUpdateGeometry,
+} from './util';
+import DraggableMarker from './DragabbleMarker.unsupported';
+import DrawEditPointInputFields from './DrawEditPointInputFields';
+import DrawEditTextBox from './DrawEditTextBox';
+import { generateTranslate } from '../../../../util/translation';
+import { isFieldSet } from '../../../../util/fieldAccess';
+
+const INITIAL_STATE = {
+  type: GEOMETRY_TYPES.POINT,
+  coordinates: [],
+};
+
+const useStyles = makeStyles((theme: Theme) =>
+  createStyles({
+    acceptButton: {
+      '&:hover': {
+        color: theme.palette.getContrastText(theme.palette.success.main),
+        backgroundColor: alpha(theme.palette.success.main, 0.8),
+      },
+    },
+    actionButton: {
+      '&:hover': {
+        backgroundColor: alpha(theme.palette.primary.light, 0.4),
+        color: theme.palette.getContrastText(theme.palette.primary.light),
+      },
+    },
+    active: {
+      backgroundColor: alpha(theme.palette.primary.light, 0.4),
+      color: theme.palette.getContrastText(theme.palette.primary.light),
+      '&:hover': {
+        backgroundColor: alpha(theme.palette.primary.light, 0.8),
+        color: theme.palette.getContrastText(theme.palette.primary.light),
+      },
+    },
+    deleteButton: {
+      '&:hover': {
+        color: theme.palette.getContrastText(theme.palette.error.main),
+        backgroundColor: alpha(theme.palette.error.main, 0.8),
+      },
+    },
+    restoreButton: {
+      '&:hover': {
+        color: theme.palette.getContrastText(theme.palette.warning.main),
+        backgroundColor: alpha(theme.palette.warning.main, 0.8),
+      },
+    },
+    tooltip: {
+      fontSize: theme.typography.pxToRem(14),
+    },
+  })
+);
+
+interface DrawEditGeometryProps {
+  error?: { message: string; type: string };
+  name: string;
+  formField: ControllerRenderProps;
+  onResetError: UseFormReturn['clearErrors'];
+  onSetError: UseFormReturn['setError'];
+  required?: boolean;
+  variant?: 'filled' | 'outlined' | 'standard';
+}
+
+let draw: any;
+
+export default function DrawEditGeometry(props: DrawEditGeometryProps) {
+  const {
+    error,
+    formField,
+    name,
+    onResetError,
+    onSetError,
+    required,
+    variant,
+  } = props;
+  const { onChange, value } = formField;
+
+  // state section
+  const classes = useStyles();
+  const map = useRecoilValue(mapInstanceState);
+  // which draw tool is selected?
+  const [activeTool, setActiveTool] = useState(GEOMETRY_TYPES.NONE);
+  // internal (-> state of the input fields) point
+  const [internalGeometry, setInternalGeometry] = useState<IGeometry>(
+    INITIAL_STATE
+  );
+  // current mouse position
+  const [mousePosition, setMousePosition] = useState<
+    { x: number; y: number } | undefined
+  >(undefined);
+  // should the tooltip be drawn on the map
+  const [displayTooltip, setDisplayTooltip] = useState<boolean>(false);
+  // is a marker being dragged?
+  const [isDragging, setIsDragging] = useState(false);
+  const t = useRecoilValue(translationFunctionState);
+
+  // abbreviations for commonly used expressions
+  const translate = generateTranslate(t);
+  const isDrawingLine = activeTool === GEOMETRY_TYPES.LINE;
+  const isDrawingPoint = activeTool === GEOMETRY_TYPES.POINT;
+  const isDrawingPolygon = activeTool === GEOMETRY_TYPES.POLYGON;
+
+  // value definitions
+  const { type, coordinates } = isFieldSet(value)
+    ? JSON.parse(value)
+    : { type: GEOMETRY_TYPES.NONE, coordinates: [] };
+
+  const shouldDisplayPointInput = () => {
+    // if no tool is selected -> determine based on external geometry
+    if (activeTool === GEOMETRY_TYPES.NONE) {
+      return type === GEOMETRY_TYPES.POINT || type === GEOMETRY_TYPES.NONE;
+    } else {
+      // else check if the point tool is selected
+      return isDrawingPoint;
+    }
+  };
+
+  // state updater function for a point geometry
+  const updatePointGeometry = (point: Array<number>) => (
+    prevState: IGeometry
+  ) => ({
+    coordinates: point,
+    type: prevState.type,
+  });
+
+  ////
+  // Draw Handler Section handling events of mapbox draw
+  ////
+
+  // handles the update of a feature
+  const handleUpdate = (e: eventHandlerParameter) => {
+    handleUpdateGeometry(e.features[0], onChange);
+  };
+
+  // handles the creation of a features
+  const handleCreate = useCallback(
+    (e: eventHandlerParameter) => {
+      if (draw === undefined) return;
+      setActiveTool(GEOMETRY_TYPES.NONE);
+      handleUpdateGeometry(e.features[0], onChange);
+    },
+    [activeTool]
+  );
+
+  ////
+  // Tooltip Handlers for Line/Polygon Tooltip
+  ////
+
+  // hide tooltip after first click
+  const handleHideTooltip = () => {
+    setMousePosition(() => undefined);
+    setDisplayTooltip(false);
+  };
+
+  // update tooltip position to follow mouse
+  const handleUpdateTooltipPosition = useThrottleCallback(
+    (e: MapMouseEvent) => {
+      if (!displayTooltip) return;
+      setMousePosition(e.point);
+    }
+  );
+
+  ////
+  // Button Handler Section handling input events on the ui buttons
+  ////
+
+  // start the line drawing process
+  const handleDrawLine = () => {
+    const newGeometryType = GEOMETRY_TYPES.LINE;
+
+    handleDeleteClick();
+    if (draw !== undefined) {
+      draw.changeMode(getDrawHandlerNameFromGeometryType(newGeometryType));
+    }
+    setActiveTool(newGeometryType);
+    setInternalGeometry((state) => ({ ...state, type: newGeometryType }));
+  };
+
+  // start the point drawing process
+  const handleDrawPoint = () => {
+    handleDeleteClick();
+    setActiveTool(GEOMETRY_TYPES.POINT);
+    setInternalGeometry((state) => ({
+      ...state,
+      type: GEOMETRY_TYPES.POINT,
+    }));
+  };
+
+  // start the polygon drawing process
+  const handleDrawPolygon = () => {
+    const newGeometryType = GEOMETRY_TYPES.POLYGON;
+
+    handleDeleteClick();
+    if (draw !== undefined) {
+      draw.changeMode(getDrawHandlerNameFromGeometryType(newGeometryType));
+    }
+    setActiveTool(newGeometryType);
+    setInternalGeometry((state) => ({
+      ...state,
+      type: newGeometryType,
+    }));
+  };
+
+  // handle a click on the delete button -> reset state
+  const handleDeleteClick = () => {
+    if (draw !== undefined) {
+      draw.deleteAll();
+      onChange(JSON.stringify(INITIAL_STATE));
+      setActiveTool(GEOMETRY_TYPES.NONE);
+    }
+    setInternalGeometry(INITIAL_STATE);
+    if (error !== undefined) {
+      onResetError(name);
+    }
+  };
+
+  // reset the drawing state (could be useful on mobile devices)
+  const handleFinishClick = () => {
+    if (draw !== undefined) {
+      draw.changeMode('simple_select');
+    }
+
+    setActiveTool(GEOMETRY_TYPES.NONE);
+  };
+
+  // called after the creation of a feature
+  const handleDrawFinish = () => {
+    setActiveTool(GEOMETRY_TYPES.NONE);
+  };
+
+  // restores the global state
+  const handleRestoreClick = () => {
+    setInternalGeometry({ type, coordinates });
+  };
+
+  // sets the marker on the current position of the user
+  const handleSetCurrentLocation = () => {
+    // reset old selection/active processes
+    if (activeTool !== GEOMETRY_TYPES.NONE) {
+      handleDeleteClick();
+    }
+
+    // check if the browser supports geolocation access
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        ({ coords }) => {
+          const { latitude, longitude } = coords;
+          const newPoint = [longitude, latitude] as [lng: number, lat: number];
+
+          setInternalGeometry({
+            type: GEOMETRY_TYPES.POINT,
+            coordinates: newPoint,
+          });
+          handleUpdateGeometry(createFeatureFromPoint(newPoint), onChange);
+
+          // if new point is not in view, update the view to fit point
+          if (map !== undefined) {
+            if (!map.getBounds().contains(newPoint)) {
+              map.flyTo({ center: newPoint });
+            }
+          }
+        },
+        () => {
+          onSetError(name, {
+            type: 'manual',
+            message: translate(
+              `${DRAW_EDIT_GEOMETRY_NAMESPACE}.accessForbidden`,
+              'Access to your location is not allowed.'
+            ) as string,
+          });
+        }
+      );
+    } else {
+      onSetError(name, {
+        type: 'manual',
+        message: translate(
+          `${DRAW_EDIT_GEOMETRY_NAMESPACE}.browserUnsupported`,
+          'Your Browser does not support geolocation.'
+        ) as string,
+      });
+    }
+  };
+
+  ////
+  // Drag Handler Section for the draggable marker
+  ////
+
+  // handle continuous updates while dragging
+  const handleDrag = useThrottleCallback((event: any) => {
+    const marker = event.target;
+
+    const { lng, lat } = marker.getLngLat();
+
+    setInternalGeometry(updatePointGeometry([lng, lat]));
+  }, 60);
+
+  // handle the drag end event -> publish state and update isDragging
+  const handleDragEnd = (event: any) => {
+    const marker = event.target;
+
+    const { lng, lat } = marker.getLngLat();
+    const newInternalPoint = [lng, lat];
+
+    // publish to global state
+    handleUpdateGeometry(createFeatureFromPoint(newInternalPoint), onChange);
+    setInternalGeometry(updatePointGeometry([lng, lat]));
+    setIsDragging(false);
+  };
+
+  // handle the drag start -> update isDragging state
+  const handleDragStart = (event: any) => {
+    const marker = event.target;
+
+    const { lng, lat } = marker.getLngLat();
+
+    setInternalGeometry(updatePointGeometry([lng, lat]));
+
+    setIsDragging(true);
+  };
+
+  ////
+  // Mouse Handler Section for initial marker placement
+  ////
+
+  // handle the mouse move on the map
+  const handleMouseMove = (e: MapMouseEvent) => {
+    const { lng, lat } = e.lngLat;
+    setInternalGeometry(updatePointGeometry([lng, lat]));
+  };
+
+  // handles a mouse click on the map to place a marker
+  const handleMouseClick = (e: MapMouseEvent) => {
+    const { lng, lat } = e.lngLat;
+
+    handleUpdateGeometry(createFeatureFromPoint([lng, lat]), onChange);
+    setInternalGeometry(updatePointGeometry([lng, lat]));
+    setActiveTool(GEOMETRY_TYPES.NONE);
+  };
+
+  ////
+  // Effect Section
+  ////
+
+  // register map handlers and set initial draw feature on mount of map
+  useEffect(() => {
+    if (map !== undefined) {
+      draw = new MapboxDraw();
+      map.addControl(draw);
+      map.on('draw.create', handleDrawFinish);
+      if (
+        internalGeometry.coordinates.length > 0 &&
+        internalGeometry.type !== GEOMETRY_TYPES.POINT
+      ) {
+        draw.set({
+          type: 'FeatureCollection',
+          features: [
+            {
+              type: 'Feature',
+              id: '',
+              properties: {},
+              geometry: { type, coordinates },
+            },
+          ],
+        });
+      }
+      return function cleanup() {
+        map.off('draw.create', handleDrawFinish);
+        map.removeControl(draw);
+        draw = undefined;
+      };
+    }
+  }, [map]);
+
+  // register event handler for draw.create
+  useEffect(() => {
+    if (map !== undefined && draw !== null && draw !== undefined) {
+      map.on('draw.create', handleCreate);
+      map.on('draw.update', handleUpdate);
+
+      return function cleanUp() {
+        map.off('draw.create', handleCreate);
+        map.off('draw.update', handleUpdate);
+      };
+    }
+  }, [map, draw]);
+
+  // update internal geometry on external change
+  useEffect(() => {
+    // only update if there is no process active
+    if (!isDragging && activeTool === GEOMETRY_TYPES.NONE) {
+      if (coordinates.length === 0) {
+        setInternalGeometry(INITIAL_STATE);
+      } else {
+        setInternalGeometry({ type, coordinates });
+      }
+    }
+  }, [value]);
+
+  // update mapbox draw geometry on external change
+  useEffect(() => {
+    const { coordinates, type } = internalGeometry;
+
+    if (
+      map !== undefined &&
+      draw !== undefined &&
+      draw.getSelectedIds().length === 0 &&
+      ((type === GEOMETRY_TYPES.LINE && coordinates.length > 2) ||
+        (type === GEOMETRY_TYPES.POLYGON && coordinates.length > 0))
+    ) {
+      draw.set({
+        type: 'FeatureCollection',
+        features: [
+          {
+            type: 'Feature',
+            id: '',
+            properties: {},
+            geometry: { type, coordinates },
+          },
+        ],
+      });
+    }
+  }, [draw, map, internalGeometry]);
+
+  // register handlers for the initial placement of the marker/polygon
+  useEffect(() => {
+    if (map !== undefined) {
+      if (isDrawingPoint) {
+        // register handlers to handle initial marker placement
+        map.on('mousemove', handleMouseMove);
+        map.once('click', handleMouseClick);
+
+        return () => {
+          map.off('mousemove', handleMouseMove);
+          map.off('click', handleMouseClick);
+        };
+      } else if (isDrawingLine || isDrawingPolygon) {
+        // register handlers to handle line/polygon tooltip placement
+        setDisplayTooltip(true);
+        map.on('mousemove', handleUpdateTooltipPosition);
+        map.once('click', handleHideTooltip);
+
+        return () => {
+          setDisplayTooltip(false);
+          map.off('mousemove', handleUpdateTooltipPosition);
+          map.off('click', handleHideTooltip);
+        };
+      }
+    }
+  }, [activeTool, map]);
+
+  return (
+    <div>
+      {(isDrawingLine || isDrawingPolygon) &&
+        mousePosition !== undefined &&
+        displayTooltip && (
+          <Tooltip
+            arrow
+            classes={{ tooltip: classes.tooltip }}
+            open={true}
+            placement="right"
+            title={translate(
+              `${DRAW_EDIT_GEOMETRY_NAMESPACE}.${
+                isDrawingLine ? 'lineTooltip' : 'polygonTooltip'
+              }`,
+              `Please click on the map to place the ${
+                isDrawingLine ? 'line' : 'polygon'
+              }.`
+            )}
+          >
+            <div
+              style={{
+                position: 'fixed',
+                top: mousePosition.y,
+                left: mousePosition.x,
+                width: 5,
+              }}
+            />
+          </Tooltip>
+        )}
+
+      {map !== undefined &&
+        internalGeometry.coordinates.length > 0 &&
+        (type === GEOMETRY_TYPES.POINT || isDrawingPoint) && (
+          <div>
+            <DraggableMarker
+              coordinates={
+                internalGeometry.coordinates as [lng: number, lat: number]
+              }
+              isDraggable
+              isInitialPlacement={isDrawingPoint}
+              onDragStart={handleDragStart}
+              onDrag={handleDrag}
+              onDragEnd={handleDragEnd}
+              map={map}
+            />
+          </div>
+        )}
+
+      <Grid item xs={12}>
+        {shouldDisplayPointInput() ? (
+          <DrawEditPointInputFields
+            error={error}
+            name={name}
+            onChange={(x) => {
+              onChange(x);
+            }}
+            onResetError={onResetError}
+            onSetError={onSetError}
+            geometry={internalGeometry}
+            required={required}
+            variant={variant}
+          />
+        ) : (
+          <DrawEditTextBox
+            error={error}
+            name={name}
+            onChange={(x) => {
+              onChange(x);
+            }}
+            onResetError={onResetError}
+            onSetError={onSetError}
+            required={required}
+            geometry={internalGeometry}
+            variant={variant}
+          />
+        )}
+      </Grid>
+      <Grid container alignItems="flex-end" spacing={2}>
+        <Grid item xs={12}>
+          <Grid container spacing={1}>
+            <Grid item xs={12}>
+              {error !== undefined && (
+                <Typography color="error">{error.message} </Typography>
+              )}
+            </Grid>
+            <Grid item xs={12}>
+              <Grid container justifyContent="flex-end" spacing={1}>
+                <Grid item xs="auto">
+                  <Tooltip
+                    title={translate(
+                      `${DRAW_EDIT_GEOMETRY_NAMESPACE}.buttons.delete`,
+                      'Reset geometry.'
+                    )}
+                  >
+                    <IconButton
+                      className={classes.deleteButton}
+                      onClick={handleDeleteClick}
+                      size="small"
+                    >
+                      <DeleteIcon />
+                    </IconButton>
+                  </Tooltip>
+                </Grid>
+                <Grid item xs="auto">
+                  <Tooltip
+                    title={translate(
+                      `${DRAW_EDIT_GEOMETRY_NAMESPACE}.buttons.restore`,
+                      'Restore latest valid geometry.'
+                    )}
+                  >
+                    <IconButton
+                      className={classes.restoreButton}
+                      onClick={handleRestoreClick}
+                      size="small"
+                    >
+                      <RestoreIcon />
+                    </IconButton>
+                  </Tooltip>
+                </Grid>
+                <Grid item xs="auto">
+                  <Tooltip
+                    title={translate(
+                      `${DRAW_EDIT_GEOMETRY_NAMESPACE}.buttons.accept`,
+                      'Accept geometry.'
+                    )}
+                  >
+                    <span>
+                      <IconButton
+                        className={clsx(classes.acceptButton)}
+                        disabled={activeTool === GEOMETRY_TYPES.NONE}
+                        onClick={handleFinishClick}
+                        size="small"
+                      >
+                        <DoneIcon />
+                      </IconButton>
+                    </span>
+                  </Tooltip>
+                </Grid>
+                <Grid item xs="auto">
+                  <Divider orientation="vertical" />
+                </Grid>
+                <Grid item xs="auto">
+                  <Tooltip
+                    title={translate(
+                      `${DRAW_EDIT_GEOMETRY_NAMESPACE}.buttons.currentLocation`,
+                      'Set geometry to current location.'
+                    )}
+                  >
+                    <IconButton
+                      className={clsx(classes.actionButton)}
+                      onClick={handleSetCurrentLocation}
+                      size="small"
+                    >
+                      <MyLocationIcon />
+                    </IconButton>
+                  </Tooltip>
+                </Grid>
+                <Grid item xs="auto">
+                  <Tooltip
+                    title={translate(
+                      `${DRAW_EDIT_GEOMETRY_NAMESPACE}.buttons.point`,
+                      'Put site maker on the map.'
+                    )}
+                  >
+                    <IconButton
+                      className={clsx(
+                        classes.actionButton,
+                        isDrawingPoint && classes.active
+                      )}
+                      onClick={handleDrawPoint}
+                      size="small"
+                    >
+                      <RoomIcon />
+                    </IconButton>
+                  </Tooltip>
+                </Grid>
+                <Grid item xs="auto">
+                  <Tooltip
+                    title={translate(
+                      `${DRAW_EDIT_GEOMETRY_NAMESPACE}.buttons.line`,
+                      'Draw a line on the map.'
+                    )}
+                  >
+                    <IconButton
+                      className={clsx(
+                        classes.actionButton,
+                        isDrawingLine && classes.active
+                      )}
+                      onClick={handleDrawLine}
+                      size="small"
+                    >
+                      <LinearScaleIcon />
+                    </IconButton>
+                  </Tooltip>
+                </Grid>
+                <Grid item xs="auto">
+                  <Tooltip
+                    title={translate(
+                      `${DRAW_EDIT_GEOMETRY_NAMESPACE}.buttons.polygon`,
+                      'Draw a polygon on the map.'
+                    )}
+                  >
+                    <IconButton
+                      className={clsx(
+                        classes.actionButton,
+                        isDrawingPolygon && classes.active
+                      )}
+                      onClick={handleDrawPolygon}
+                      size="small"
+                    >
+                      <PanoramaWideAngleIcon />
+                    </IconButton>
+                  </Tooltip>
+                </Grid>
+              </Grid>
+            </Grid>
+          </Grid>
+        </Grid>
+      </Grid>
+    </div>
+  );
+}

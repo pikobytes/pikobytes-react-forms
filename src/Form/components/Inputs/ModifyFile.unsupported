@@ -1,0 +1,355 @@
+/**
+ * Created by nicolas.looschen@pikobytes.de on 5/5/21.
+ *
+ * This file is subject to the terms and conditions defined in
+ * file 'LICENSE.txt', which is part of this source code package.
+ */
+import React, { useEffect, useRef, useState } from 'react';
+import { useRecoilValue, useSetRecoilState } from 'recoil';
+import {
+  alpha,
+  Box,
+  Card,
+  CardContent,
+  CardHeader,
+  CircularProgress,
+  createStyles,
+  Grid,
+  IconButton,
+  makeStyles,
+  Theme,
+  Tooltip,
+  Typography,
+} from '@material-ui/core';
+import { Clear, Delete, Restore } from '@material-ui/icons';
+import clsx from 'clsx';
+
+import {
+  globalErrorMessageState,
+  keycloakTokenState,
+  translationFunctionState,
+} from '../../../structs/atoms';
+import {
+  deleteTemporaryFile,
+  getFileFromServer,
+  markDeleteFile,
+  unmarkDeleteFile,
+} from '../../../util/api/document';
+import { generateTranslate } from '../../../util/translation';
+import { FieldProps } from '../Field/Field';
+import TextField from './TextField';
+import { PREVIEW_TYPE } from '../../../components/UploadDialog/UploadDialog';
+
+const useStyles = makeStyles((theme: Theme) =>
+  createStyles({
+    actionContainer: {
+      position: 'absolute',
+      right: 0,
+      top: 0,
+    },
+    overlay: {
+      alignContent: 'center',
+      backgroundColor: alpha(theme.palette.background.paper, 0.92),
+      border: '1px solid',
+      borderColor: theme.palette.divider,
+      bottom: theme.spacing(3),
+      display: 'flex',
+      justifyContent: 'center',
+      position: 'absolute',
+      width: '91%',
+      zIndex: 2,
+    },
+    preview: {
+      height: 300,
+      objectFit: 'contain',
+      width: '100%',
+    },
+    previewContainer: {
+      position: 'relative',
+    },
+    previewPlaceholder: {
+      height: 306,
+    },
+    markedForDeletion: {
+      filter: 'grayscale(100%)',
+    },
+  })
+);
+
+const MODIFY_FILE_NAMESPACE = 'form:component.ModifyFile';
+
+export default function ModifyFile(
+  props: FieldProps & { setFormIsDirty: (dirty: boolean) => void }
+) {
+  const { error, field, loading, register, setFormIsDirty, variant } = props;
+  const { previewType, sessionId } = field;
+  const [backendPreview, setBackendPreview] = useState<string | undefined>(
+    undefined
+  );
+  const classes = useStyles();
+  const [file, setFile] = useState<File | undefined>(undefined);
+  const fieldRef = useRef<HTMLInputElement | null>(null);
+  const keycloakToken = useRecoilValue(keycloakTokenState);
+  const [isMarkedForDeletion, setIsMarkedForDeletion] = useState(false);
+  const [isPreviewLoading, setIsPreviewLoading] = useState(false);
+  const [preview, setPreview] = useState<string | undefined>(undefined);
+  const setGlobalErrorMessage = useSetRecoilState(globalErrorMessageState);
+  const t = useRecoilValue(translationFunctionState);
+  const translate = generateTranslate(t);
+
+  // there are 6 different view states for the component
+  // 1. Show an empty field without a preview container
+  // 2. Show the backend file
+  // 3. Show the frontend file
+  // 4. Show the backend file with "markDeletion" feedback
+  // 5. Show loading feedback while the backend file is downloading
+  // 6. Show remote file stored in persisted session1
+
+  // differentiates between case 2 and 3/4
+  const showFrontendFile = preview !== undefined;
+  // differentiates between case 2 and case 4
+  const showMarkDeletionFeedback = !showFrontendFile && isMarkedForDeletion;
+  // differentiates between case 1 and case  2/3/4/5
+  const showFilePreviewContainer =
+    backendPreview !== undefined || preview !== undefined || isPreviewLoading;
+
+  if (register === undefined) {
+    throw new Error('register cannot be undefined');
+  }
+
+  const { onBlur, onChange, ref, ...rest } = register(field.key);
+
+  //
+  // Label section
+  //
+
+  const imageTitle = translate(
+    `${MODIFY_FILE_NAMESPACE}.title.${
+      showFrontendFile
+        ? 'newPreview'
+        : previewType === PREVIEW_TYPE.SERVER
+        ? 'persistedPreview'
+        : 'sessionPreview'
+    }`,
+    showFrontendFile
+      ? 'Newly selected preview image'
+      : 'Preview image available on server'
+  );
+
+  const deletionNotifier = translate(
+    `${MODIFY_FILE_NAMESPACE}.deletionNotifier`,
+    'Marked for deletion'
+  );
+
+  const deleteButtonTooltip = translate(
+    `${MODIFY_FILE_NAMESPACE}.deleteButton.${
+      previewType === PREVIEW_TYPE.SERVER
+        ? showMarkDeletionFeedback
+          ? 'restore'
+          : 'markDelete'
+        : 'deleteFromSession'
+    }`,
+    previewType === PREVIEW_TYPE.SERVER
+      ? showMarkDeletionFeedback
+        ? 'Restore file'
+        : 'Mark file for deletion'
+      : 'Delete file from session'
+  );
+
+  //
+  // Handler section
+  //
+
+  const handleClear = () => {
+    setFile(undefined);
+    setPreview(undefined);
+    if (fieldRef !== null && fieldRef.current !== null) {
+      fieldRef.current.value = '';
+      onBlur({ target: fieldRef.current });
+    }
+  };
+
+  const handleDelete = () => {
+    if (sessionId !== undefined) {
+      markDeleteFile(field.key, sessionId).then(() => {
+        setFormIsDirty(true);
+        setIsMarkedForDeletion(true);
+      });
+    }
+  };
+
+  const handleDeleteFileInSession = () => {
+    if (sessionId !== undefined) {
+      deleteTemporaryFile(field.key, sessionId, {}).then(() => {
+        setFile(undefined);
+        setBackendPreview(undefined);
+        if (fieldRef !== null && fieldRef.current !== null) {
+          fieldRef.current.value = '';
+          onBlur({ target: fieldRef.current });
+        }
+      });
+    }
+  };
+
+  const handleFileChange = (e: Event) => {
+    const target = e.target as HTMLInputElement;
+    const files = target.files;
+
+    onChange(e);
+    if (files !== null && files.length > 0) {
+      // currently the component only support single files for selection
+      setFile(files[0]);
+    } else {
+      setFile(undefined);
+    }
+    return new Promise<void | boolean>(() => {});
+  };
+
+  const handleUndelete = () => {
+    if (sessionId !== undefined) {
+      unmarkDeleteFile(field.key, sessionId).then(() => {
+        setFormIsDirty(false);
+        setIsMarkedForDeletion(false);
+      });
+    }
+  };
+
+  //
+  // Effect section
+  //
+
+  // show preview of currently selected image
+  useEffect(() => {
+    if (file !== undefined) {
+      setPreview(URL.createObjectURL(new Blob([file], {})));
+      // scroll back to view after image is rendered
+      setTimeout(() => {
+        fieldRef.current?.scrollIntoView();
+      }, 50);
+    } else {
+      setPreview(undefined);
+    }
+  }, [file]);
+
+  // fetch preview from server
+  useEffect(() => {
+    if (field.defaultValue !== '' && field.defaultValue !== undefined) {
+      setIsPreviewLoading(true);
+      getFileFromServer(field.defaultValue as string)
+        .then((response) => {
+          setBackendPreview(
+            URL.createObjectURL(
+              new Blob([response.data], {
+                type: response.headers['content-type'],
+              })
+            )
+          );
+          setIsPreviewLoading(false);
+        })
+        .catch((e) => {
+          setGlobalErrorMessage(e.message);
+          setIsPreviewLoading(false);
+        });
+    } else {
+      setBackendPreview(undefined);
+    }
+  }, [field.defaultValue, keycloakToken]);
+
+  useEffect(() => {
+    // reset preview image if the field is externally reset
+    if (fieldRef.current?.value === '') {
+      setFile(undefined);
+      setPreview(undefined);
+    }
+  }, [fieldRef.current?.value]);
+
+  return (
+    <Grid container direction="row" spacing={2}>
+      {showFilePreviewContainer && (
+        <Grid item xs={12} className={classes.previewContainer}>
+          <Card variant="outlined">
+            <CardHeader
+              action={
+                !showFrontendFile && (
+                  <Tooltip title={deleteButtonTooltip}>
+                    <IconButton
+                      onClick={
+                        previewType === PREVIEW_TYPE.SERVER
+                          ? isMarkedForDeletion
+                            ? handleUndelete
+                            : handleDelete
+                          : handleDeleteFileInSession
+                      }
+                    >
+                      {isMarkedForDeletion ? <Restore /> : <Delete />}
+                    </IconButton>
+                  </Tooltip>
+                )
+              }
+              title={imageTitle}
+              titleTypographyProps={{ variant: 'h5' }}
+            />
+
+            <CardContent>
+              {isPreviewLoading ? (
+                <Grid
+                  alignItems="center"
+                  className={classes.previewPlaceholder}
+                  justifyContent="center"
+                  container
+                >
+                  <Grid item xs="auto">
+                    <CircularProgress />
+                  </Grid>
+                </Grid>
+              ) : (
+                <React.Fragment>
+                  {showMarkDeletionFeedback && (
+                    <Box className={classes.overlay} boxShadow={1}>
+                      <Typography color="error" variant="h4">
+                        {deletionNotifier}
+                      </Typography>
+                    </Box>
+                  )}
+                  <img
+                    alt="preview of the resource"
+                    className={clsx(
+                      classes.preview,
+                      showMarkDeletionFeedback && classes.markedForDeletion
+                    )}
+                    src={showFrontendFile ? preview : backendPreview}
+                  />
+                </React.Fragment>
+              )}
+            </CardContent>
+          </Card>
+        </Grid>
+      )}
+      <Grid item xs={12}>
+        <TextField
+          endAdornments={[
+            () =>
+              file !== undefined ? (
+                <IconButton onClick={handleClear}>
+                  <Clear />
+                </IconButton>
+              ) : null,
+          ]}
+          error={error}
+          field={field}
+          loading={loading}
+          registerReturn={{
+            ref: (element) => {
+              ref(element);
+              fieldRef.current = element;
+            },
+            onBlur,
+            onChange: handleFileChange,
+            ...rest,
+          }}
+          variant={variant}
+        />
+      </Grid>
+    </Grid>
+  );
+}
