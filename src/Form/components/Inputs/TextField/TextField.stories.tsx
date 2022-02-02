@@ -7,6 +7,7 @@
 import React from 'react';
 
 import TextField from "./TextField";
+import {FormProviderWrapper} from "../../Form/Form.stories";
 
 export default {
     title: "Example/TextField",
@@ -14,7 +15,9 @@ export default {
 }
 
 function Template(args: any) {
-    return <TextField {...args} />
+    return <FormProviderWrapper>
+        <TextField {...args} />
+    </FormProviderWrapper>
 }
 
 

@@ -7,62 +7,79 @@
 import React from 'react';
 import {
     alpha,
-    createStyles,
     IconButton,
     InputAdornment,
-     TextField,
-    Theme,
+    TextField,
 } from '@mui/material';
-import { Event } from '@mui/icons-material';
-import { DateTimePicker as MUIDateTimePicker } from '@mui/lab';
-import { ControllerRenderProps } from 'react-hook-form';
+import {Event} from '@mui/icons-material';
+import {DateTimePicker as MUIDateTimePicker} from '@mui/lab';
+import {ControllerRenderProps, useController, useFormContext} from 'react-hook-form';
+import formatISO from 'date-fns/formatISO';
 
-import { IField } from '../../../typedefs/IField';
+import {IDefaultUiSettings, IField, IGenericField} from '../../../typedefs/IField';
 
-export interface DateTimePickerProps {
-  error?: {
-    type: string;
-    message: string;
-  };
-  field: IField;
-  formField: ControllerRenderProps;
-  variant?: 'filled' | 'outlined' | 'standard';
-}
+export function DateTimePicker({
+                                   fieldId,
+                                   uiSettings: {
+                                       description,
+                                       label,
+                                       placeholder,
+                                       size,
+                                       variant,
+                                   },
+                                   validation,
+                               }: IGenericField<IDefaultUiSettings, undefined>) {
+    const {field} = useController({name: fieldId});
+    const {ref, value, onChange, ...rest} = field;
 
-export function DateTimePicker(props: DateTimePickerProps) {
-  const { error, field, formField, variant } = props;
-  const { ref, value, onChange, ...rest } = formField;
-  const { key, label, placeholder, required = false, size, tooltip } = field;
+    const {formState} = useFormContext();
 
-  return (
-    <MUIDateTimePicker
-        renderInput={(props) => <TextField {...props} />}
-      ampm={false}
-      disableFuture
-      key={key}
-      InputProps={{
-        endAdornment: (
-          <InputAdornment position="end">
-            <IconButton>
-              <Event />
-            </IconButton>
-          </InputAdornment>
-        ),
-      }}
-      inputRef={ref}
-      label={label}
-      value={value === '' ? null : value}
-      onChange={(dateTimeObject) => {
-        if (dateTimeObject !== null) {
-          // publish string to form state instead of datetime object
+    const {required} = validation;
+    const {errors} = formState;
+    const error = errors[fieldId];
+    const highlightBackground = required && value === '';
 
-          // @ts-ignore
-            onChange(dateTimeObject.toISO());
-        }
-      }}
-      {...rest}
-    />
-  );
+
+    return (
+        <MUIDateTimePicker
+            clearable
+            renderInput={(props) => <TextField {...props}
+                                               helperText={error !== undefined ? error.message : description}
+                                               placeholder={placeholder}
+                                               size={size}
+                                               variant={variant}/>}
+            ampm={false}
+            disableFuture
+            inputFormat={"yyyy/MM/dd, HH:mm"}
+            mask="____/__/__, __:__"
+            InputProps={{
+                endAdornment: (
+                    <InputAdornment position="end">
+                        <IconButton>
+                            <Event/>
+                        </IconButton>
+                    </InputAdornment>
+                ),
+                sx: theme => ({
+                    backgroundColor: highlightBackground
+                        ? alpha(theme.palette.error.light, 0.35)
+                        : theme.palette.background.default
+                })
+            }}
+            inputRef={ref}
+            label={label}
+            value={value === '' ? null : value}
+            onChange={(dateTimeObject) => {
+                if (dateTimeObject !== null) {
+                    // publish string to form state instead of datetime object
+
+                    // @ts-ignore
+                    onChange(formatISO(dateTimeObject));
+                }
+            }}
+            {...rest}
+        />
+    );
 }
 
 export default DateTimePicker;

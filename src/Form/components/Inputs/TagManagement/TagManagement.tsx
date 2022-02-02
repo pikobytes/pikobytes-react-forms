@@ -48,7 +48,6 @@ export const TagManagement = (props: ITagManagementProps) => {
    */
   const createTag = (tag: string) => {
     if (onTagCreate !== undefined && !tags.includes(tag)) {
-      console.log(tags, tagsToDelete);
       onTagCreate(tag, { tags, tagsToDelete });
     }
 

@@ -6,7 +6,7 @@
  */
 import {  LocalizationProvider } from '@mui/lab';
 import AdapterDateFns from '@mui/lab/AdapterDateFns'
-import React from 'react';
+import React, {useState} from 'react';
 
 import DateTimePicker from "./DateTimePicker";
 
@@ -16,8 +16,12 @@ export default {
 }
 
 const Template = (args: any) => {
+    const [value, setValue] = useState<string | null>("");
+
+    const handleChange = (newValue: string) => {setValue(newValue)};
+
     return (<LocalizationProvider dateAdapter={AdapterDateFns}>
-        <DateTimePicker {...args} />
+        <DateTimePicker {...args} formField={Object.assign(args.formField, {value: value, onChange: handleChange})} />
     </LocalizationProvider>)
 };
 
@@ -26,4 +30,13 @@ export const Default = Template.bind({});
 Default.args = {
     formField: { ref: () => {}},
     field: { key: "test"}
+};
+
+
+export const RequiredAndEmpty = Template.bind({});
+// @ts-ignore
+RequiredAndEmpty.args = {
+    formField: { ref: () => {}, value: ""},
+    field: { key: "a", required: true },
+    variant: "outlined"
 };

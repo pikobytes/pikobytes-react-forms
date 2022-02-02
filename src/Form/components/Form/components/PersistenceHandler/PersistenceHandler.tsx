@@ -6,24 +6,24 @@
  */
 import {useCallback, useEffect} from "react";
 
-import {PERSISTED_FORM_LOCAL_STORAGE_KEY} from "../../Form";
 import FIELD_TYPES from "../../../../typedefs/FieldTypes";
 import {useLocalStorage} from "../../../../hooks";
 import {IField} from "../../../../typedefs/IField";
+import {useFormContext} from "react-hook-form";
 
 interface PersistenceHandlerProps {
     activatePersistence: boolean;
-    getValues: () => {[keys: string]: any};
-    isSubmitting: boolean;
-    isSubmitted: boolean;
-    reset: (values: {[key: string] : any}) => void;
+    persistenceKey: string;
     sections: Array<{title: string, fields: Array<IField>}>
 }
 
 
-export const PersistenceHandler = ({activatePersistence, getValues, isSubmitting, isSubmitted, reset, sections } : PersistenceHandlerProps) => {
+export const PersistenceHandler = ({activatePersistence, persistenceKey, sections } : PersistenceHandlerProps) => {
+    const { getValues, formState, reset } = useFormContext();
+    const { isSubmitting, isSubmitted} = formState;
+
     const [persistedLocalForm, setPersistedLocalForm] = useLocalStorage<any>(
-        PERSISTED_FORM_LOCAL_STORAGE_KEY,
+        persistenceKey,
         undefined
     );
 
@@ -104,7 +104,7 @@ export const PersistenceHandler = ({activatePersistence, getValues, isSubmitting
     useEffect(() => {
         // remove persisted form when it was submitted
         if (isSubmitted && activatePersistence) {
-            localStorage.removeItem(PERSISTED_FORM_LOCAL_STORAGE_KEY);
+            localStorage.removeItem(persistenceKey);
         }
     }, [activatePersistence, isSubmitted]);
 

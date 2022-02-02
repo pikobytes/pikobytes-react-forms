@@ -13,7 +13,7 @@ import { IField } from '../../../typedefs/IField';
 import { ITagObject } from './typedefs';
 import {isFieldSet} from "../../../util/fieldAccess";
 
-interface TagManagementContainerProps {
+export interface TagManagementContainerProps {
   field: IField;
   formField: ControllerRenderProps;
   variant?: 'filled' | 'outlined' | 'standard';
@@ -61,3 +61,5 @@ export function TagManagementContainer(props: TagManagementContainerProps) {
     />
   );
 }
+
+export default TagManagementContainer;

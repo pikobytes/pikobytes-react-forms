@@ -7,57 +7,54 @@
 
 import React from 'react';
 import {
-  Checkbox as MUICheckBox,
-  FormControl,
-  FormControlLabel,
-  FormGroup,
-  FormHelperText,
-  FormLabel,
+    Checkbox as MUICheckBox,
+    FormControl,
+    FormControlLabel,
+    FormGroup,
+    FormHelperText,
 } from '@mui/material';
+import {useController, useFormContext} from "react-hook-form";
 
-import { FieldProps } from '../../Field/Field';
+import {IDefaultUiSettings, IGenericField} from "../../../typedefs/IField";
 
-export default function Checkbox(props: FieldProps) {
-  const {
-    defaultValue,
-    error,
-    field: {
-      key,
-      label,
-      size,
-      validation: { required },
-    },
-    register,
-  } = props;
+export default function Checkbox(props: IGenericField<IDefaultUiSettings, void>) {
+    const {
+        fieldId,
+        uiSettings: {
+            label,
+            size
+        },
+        validation: {
+            required
+        }
 
-  if (register === undefined) {
-    throw new Error('register must not bet undefined');
-  }
+    } = props;
 
-  const { ref, ...rest } = register(key);
-  const isErroneous = error !== undefined;
+    const {formState} = useFormContext();
+    const {field} = useController({name: fieldId});
 
-  return (
-    <FormControl
-      error={isErroneous}
-      fullWidth
-      required={required !== false}
-      size={size}
-    >
-      <FormLabel>{label}</FormLabel>
-      <FormGroup>
-        <FormControlLabel
-          control={
-            <MUICheckBox
-              defaultValue={defaultValue}
-              inputRef={ref}
-              inputProps={{ ...rest }}
-            />
-          }
-          label={''}
-        />
-      </FormGroup>
-      {isErroneous && <FormHelperText>{error!.message}</FormHelperText>}
-    </FormControl>
-  );
+    const {errors} = formState;
+    const error = errors[fieldId];
+    const isErroneous = error !== undefined;
+
+    return (
+        <FormControl
+            error={isErroneous}
+            fullWidth
+            required={required !== false}
+            size={size}
+        >
+            <FormGroup>
+                <FormControlLabel
+                    control={
+                        <MUICheckBox {...field} checked={field.value ?? false} onChange={e => {
+                            field.onChange(e.target.checked)
+                        }}/>
+                    }
+                    label={label ?? ""}
+                />
+            </FormGroup>
+            {isErroneous && <FormHelperText>{error!.message}</FormHelperText>}
+        </FormControl>
+    );
 }

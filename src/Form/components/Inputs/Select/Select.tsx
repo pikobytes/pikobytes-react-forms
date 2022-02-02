@@ -5,86 +5,100 @@
  * file 'LICENSE.txt', which is part of this source code package.
  */
 
-import React, { useRef } from 'react';
-import useResizeObserver from 'use-resize-observer';
-
+import React, {useRef} from 'react';
 import {
-  alpha,
-  FormControl,
-  FormHelperText,
-  InputLabel,
-  makeStyles,
-  OutlinedInput,
-  Select as MUISelect,
-  Theme,
+    alpha,
+    FormControl,
+    FormHelperText,
+    InputLabel,
+    Select as MUISelect,
 } from '@mui/material';
-import { FieldProps } from '../../Field/Field';
 
-// const useStyles = makeStyles((theme: Theme) =>
-//   createStyles({
-//     root: ({ highlightBackground }: { highlightBackground: boolean }) => ({
-//       backgroundColor: highlightBackground
-//         ? alpha(theme.palette.error.light, 0.35)
-//         : theme.palette.common.white,
-//     }),
-//   })
-// );
+import {useFormContext, UseFormRegisterReturn} from "react-hook-form";
+import {
+    IDefaultUiSettings,
+    IGenericField,
+    ISelectCustomProperties
+} from "../../../typedefs/IField";
 
-export default function Select(props: FieldProps) {
-  const { error, field, formField, variant } = props;
-  const { key, label, options, placeholder, required = false, size } = field;
-  const labelRef = useRef<HTMLLabelElement>(null);
-  const { width: labelWidth } = useResizeObserver({ ref: labelRef });
+export default function Select({
+                                   customProperties: {
+                                       options,
+                                       registerReturn
+                                   },
+                                   fieldId,
+                                   uiSettings: {
+                                       label,
+                                       placeholder,
+                                       size,
+                                       variant
+                                   },
+                                   validation
 
-  const { onChange, value } = formField ?? {
-    onChange: () => {},
-    value: '',
-  };
+                               }: IGenericField<IDefaultUiSettings, ISelectCustomProperties>) {
 
-  const isErroneous = error !== undefined;
+    const {register} = useFormContext();
 
-  return (
-    <FormControl
-      key={key}
-      error={isErroneous}
-      fullWidth
-      required={required}
-      size={size}
-      variant={variant}
-    >
-      <InputLabel htmlFor={label} ref={labelRef} shrink variant={variant}>
-        {label}
-      </InputLabel>
-      <MUISelect
-        input={
-          <OutlinedInput
-            // className={classes.root}
-            notched
-            name={field.key}
-            id={label}
-          />
-        }
-        native
-        onChange={(e) => {
-          if (onChange !== undefined) {
-            onChange(e.target.value);
-          } else {
-            throw new Error(
-              'An onChange handler is required for the Select Element'
-            );
-          }
-        }}
-        value={value}
-      >
-        <option value="">{placeholder}</option>
+    if (register === undefined && registerReturn === undefined) {
+        throw new Error('Either register or registerReturn must be supplied');
+    }
 
-        {options?.map(({ label, value, helperText }) => (
-          <option key={label} title={helperText} value={value}>
-            {label}
-          </option>
-        ))}
-      </MUISelect>
-      {isErroneous && <FormHelperText>{error?.message}</FormHelperText>}
-    </FormControl>
-  );
+    const {required} = validation;
+
+    const {ref, ...rest} =
+        register !== undefined
+            ? register(fieldId)
+            : (registerReturn as UseFormRegisterReturn);
+
+    const {formState} = useFormContext();
+
+    const {errors} = formState;
+    const error = errors[fieldId];
+
+    const isErroneous = error !== undefined;
+    const fieldRef = useRef<HTMLInputElement | null>(null);
+
+    const highlightBackground =
+        required &&
+        fieldRef !== null &&
+        fieldRef.current !== null &&
+        fieldRef!.current.value === '';
+
+    return (
+        <FormControl
+            key={fieldId}
+            error={isErroneous}
+            fullWidth
+            required={required !== false}
+            size={size}
+            variant={variant}
+        >
+            <InputLabel htmlFor={label} shrink sx={theme => ({backgroundColor: theme.palette.background.default})}>
+                {label}
+            </InputLabel>
+            <MUISelect
+                inputProps={{id: label, ...rest}}
+                inputRef={(e) => {
+                    ref(e);
+                    fieldRef.current = e;
+                }}
+                label={label}
+                native
+                sx={(theme) => ({
+                    backgroundColor: highlightBackground
+                        ? alpha(theme.palette.error.light, 0.35)
+                        : theme.palette.background.default
+                })}
+            >
+                <option value="">{placeholder}</option>
+
+                {options?.map(({label, value, helperText}) => (
+                    <option key={label} title={helperText} value={value}>
+                        {label}
+                    </option>
+                ))}
+            </MUISelect>
+            {isErroneous && <FormHelperText>{error?.message}</FormHelperText>}
+        </FormControl>
+    );
 }

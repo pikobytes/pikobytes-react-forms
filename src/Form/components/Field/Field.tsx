@@ -27,19 +27,10 @@ import DateTimePicker from '../Inputs/DateTimePicker/DateTimePicker';
 // import Publications from '../Inputs/Publications/Publications.unsupported';
 
 export interface FieldProps {
-  control?: Control;
-  defaultValue?: any;
-  error?: {
-    type: string;
-    message: string;
-  };
   field: IField;
   formField?: ControllerRenderProps;
   isEdit?: boolean;
   loading?: boolean;
-  onSelect?: (...event: any[]) => void;
-  register?: UseFormRegister<any>;
-  registerReturn?: UseFormRegisterReturn;
   rules?: IValidation;
   value?: string | number;
   variant?: 'filled' | 'outlined' | 'standard';
@@ -53,16 +44,9 @@ export default function Field(
   }
 ) {
   const {
-    control,
-    defaultValue,
-    error,
     field,
     loading,
-    onResetError,
-    onSetError,
-    register,
     rules,
-    setFormIsDirty,
     variant,
   } = props;
 
@@ -71,13 +55,10 @@ export default function Field(
     // case FIELD_TYPES.AUTOSUGGEST:
     //   return (
     //     <Controller
-    //       control={control}
     //       name={field.key}
-    //       defaultValue={defaultValue}
     //       rules={rules}
     //       render={(props) => (
     //         <Autosuggest
-    //           error={error}
     //           field={props.field}
     //           formField={field}
     //           variant={variant}
@@ -88,35 +69,21 @@ export default function Field(
     case FIELD_TYPES.BOOL:
       return (
         <CheckBox
-          defaultValue={defaultValue}
-          error={error}
           field={field}
-          register={register}
         />
       );
     case FIELD_TYPES.SELECT:
       return (
-        <Controller
-          control={control}
-          name={field.key}
-          defaultValue={defaultValue}
-          rules={rules}
-          render={(props) => (
-            <Select
-              error={error}
+          <Select
               field={field}
-              formField={props.field}
+              loading={loading}
               variant={variant}
-            />
-          )}
-        />
+          />
       );
     // case FIELD_TYPES.GEOMETRY:
     //   return (
     //     <Controller
-    //       control={control}
     //       name={field.key}
-    //       defaultValue={defaultValue}
     //       render={(props) => (
     //         <DrawEditGeometry
     //           required={field.required}
@@ -124,7 +91,6 @@ export default function Field(
     //           formField={props.field}
     //           onResetError={onResetError}
     //           onSetError={onSetError}
-    //           error={error}
     //           variant={variant}
     //         />
     //       )}
@@ -135,8 +101,6 @@ export default function Field(
       return (
         <Controller
           name={field.key}
-          control={control}
-          defaultValue={defaultValue}
           render={(props) => (
             <TagManagementContainer
               field={field}
@@ -148,31 +112,18 @@ export default function Field(
         />
       );
     case FIELD_TYPES.DATE:
-      return (
-        <Controller
-          name={field.key}
-          control={control}
-          defaultValue={defaultValue}
-          render={(props) => (
-            <DateTimePicker
+      return (<DateTimePicker
               field={field}
-              formField={props.field}
-              error={error}
               variant={variant}
             />
-          )}
-          rules={rules}
-        />
-      );
+          );
+
     // case FIELD_TYPES.FILE:
     //   return (
     //     <ModifyFile
-    //       error={error}
-    //       defaultValue={defaultValue}
     //       field={field}
     //       loading={loading}
     //       setFormIsDirty={setFormIsDirty}
-    //       register={register}
     //       variant={variant}
     //     />
     //   );
@@ -180,15 +131,11 @@ export default function Field(
     //   return (
     //     <Controller
     //       name={field.key}
-    //       control={control}
-    //       defaultValue={defaultValue}
     //       render={(props) => (
     //         <Publications
-    //           error={error}
     //           field={field}
     //           formField={props.field}
     //           loading={loading}
-    //           register={register}
     //           variant={variant}
     //         />
     //       )}
@@ -201,10 +148,8 @@ export default function Field(
     default:
       return (
         <TextField
-          error={error}
           field={field}
           loading={loading}
-          register={register}
           variant={variant}
         />
       );

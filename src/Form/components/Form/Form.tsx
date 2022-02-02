@@ -11,8 +11,8 @@ import React, {
     useRef,
     useState,
 } from 'react';
-import {useForm} from 'react-hook-form';
-import {Grid, Typography} from '@mui/material';
+import {FormProvider, useForm} from 'react-hook-form';
+import {alpha, Grid, Typography} from '@mui/material';
 import {ErrorBoundary} from 'react-error-boundary';
 
 import {IField, ISection} from '../../typedefs/IField';
@@ -23,7 +23,7 @@ import {usePrevious} from "../../hooks";
 import PersistenceHandler from "./components/PersistenceHandler/PersistenceHandler";
 
 interface FormProps {
-    activatePersistence: boolean;
+    activatePersistence?: boolean;
     FieldComponent: FunctionComponent<any>;
     fieldsToWatch: Array<string>;
     formId: string;
@@ -38,45 +38,20 @@ interface FormProps {
     ) => void;
     onSetIsDirty: (isDirty: boolean) => void;
     onSubmit: (data: any) => void;
-    onUpdateResetForm: (e: any) => void;
+    onUpdateResetForm?: (e: any) => void;
+    persistenceKey: string;
     sections: Array<ISection>;
     variant?: 'filled' | 'outlined' | 'standard';
 }
 
-// const useStyles = makeStyles((theme: Theme) =>
-//   createStyles({
-//     formHeadlines: {
-//       fontWeight: 500,
-//       fontSize: 20,
-//       textTransform: 'uppercase',
-//       borderBottom: '1px solid ' + alpha(theme.palette.primary.main, 0.3),
-//       margin: theme.spacing(3, 0, 1, 0),
-//     },
-//     gridSection: {
-//       paddingBottom: theme.spacing(4),
-//     },
-//     hiddenInput: {
-//       height: 0,
-//       opacity: 0,
-//       position: 'absolute',
-//       right: 0,
-//       tabIndex: -1,
-//       top: 0,
-//       width: 0,
-//     },
-//   })
-// );
-
-const IS_DIRTY_CHECKER_ID = 'isDirtyChecker';
+const MANUAL_DIRTY_TRIGGER_ID = "MANUAL_DIRTY_TRIGGER"
 
 const cloneValues = (val: any) =>
     typeof val === 'object' && val !== null ? Object.assign({}, val) : val;
 
-export const PERSISTED_FORM_LOCAL_STORAGE_KEY = 'upload_form';
-
 export default function Form(props: FormProps) {
     const {
-        activatePersistence,
+        activatePersistence = false,
         FieldComponent,
         fieldsToWatch,
         formId,
@@ -86,29 +61,27 @@ export default function Form(props: FormProps) {
         onSetIsDirty,
         onSubmit,
         onUpdateResetForm,
+        persistenceKey,
         sections,
         variant,
     } = props;
 
-    const {
-        clearErrors,
-        control,
-        getValues,
-        formState,
-        register,
-        handleSubmit,
-        reset,
-        setError,
-        setValue,
-        watch,
-    } = useForm({
-        defaultValues: Object.assign(initialValues, {[IS_DIRTY_CHECKER_ID]: ''}),
+    const formMethods = useForm({
+        defaultValues: Object.assign({[MANUAL_DIRTY_TRIGGER_ID]: ""}, initialValues),
         shouldUnregister: true,
     });
+
+    const {
+        formState,
+        handleSubmit,
+        reset,
+        setValue,
+        watch,
+    } = formMethods;
     const [blockPublish, setBlockPublish] = useState<boolean>(false);
-    const isDirtyChecker = useRef<HTMLInputElement | undefined>(undefined);
-    const {errors, isDirty, isSubmitted, isSubmitting} = formState;
-    const {ref, ...rest} = register('isDirtyChecker');
+    const { dirtyFields } = formState;
+
+    const isDirty = Object.keys(dirtyFields).length > 0;
 
     const fieldValues =
         fieldsToWatch === undefined
@@ -117,15 +90,18 @@ export default function Form(props: FormProps) {
 
     const previousFieldValues = usePrevious(fieldValues);
 
+    // register manual dirty trigger value
+    formMethods.register(MANUAL_DIRTY_TRIGGER_ID);
+
     //
     // Handler section
     //
 
     const handleDirtyForm = (dirty = true) => {
         if (dirty) {
-            setValue(IS_DIRTY_CHECKER_ID, 'a', {shouldDirty: true});
+            setValue(MANUAL_DIRTY_TRIGGER_ID, 'a', {shouldDirty: true});
         } else {
-            setValue(IS_DIRTY_CHECKER_ID, '', {shouldDirty: true});
+            setValue(MANUAL_DIRTY_TRIGGER_ID, '', {shouldDirty: true});
         }
     };
 
@@ -149,7 +125,7 @@ export default function Form(props: FormProps) {
 
         if (blockPublish) {
             setBlockPublish(false);
-        } else if (fieldValues !== undefined && previousFieldValues !== undefined) {
+        } else if (fieldValues !== undefined && previousFieldValues !== undefined && onPublishValues !== undefined) {
             onPublishValues(fieldValues as string[], previousFieldValues, {
                 setValue,
             });
@@ -162,110 +138,106 @@ export default function Form(props: FormProps) {
 
     // propagate isDirty changes to outside components
     useEffect(() => {
+        if(onSetIsDirty){
         onSetIsDirty(isDirty);
+        }
     }, [isDirty]);
 
     // propagate reset function to outside components
     useEffect(() => {
+        if(onUpdateResetForm !== undefined){
         onUpdateResetForm(reset);
+        }
     }, [onUpdateResetForm, reset]);
 
     // update initial values of the form if the supplied initial values change
     useEffect(() => {
-        setBlockPublish(true);
-        reset(initialValues, {keepValues: true});
+            setBlockPublish(true);
+            reset(initialValues, {keepValues: true});
 
-        // the "isDirty" - check is triggered by a change/blur
-        //  -> focus and blur field in order to trigger an update of isDirty after
-        //  receiving new initial Values
-        if (isDirtyChecker !== undefined && isDirtyChecker?.current !== undefined) {
-            isDirtyChecker.current.focus();
-            isDirtyChecker.current.blur();
-        }
+            // the "isDirty" - check is triggered by a change/blur
+            //  -> focus and blur field in order to trigger an update of isDirty after
+            //  receiving new initial Values
     }, [initialValues]);
 
 
     return (
         <ErrorBoundary FallbackComponent={FormErrorFallback} onReset={handleReset}>
-            <>
-                <PersistenceHandler activatePersistence={activatePersistence} getValues={getValues}
-                                    isSubmitting={isSubmitting} isSubmitted={isSubmitted} reset={reset}
-                                    sections={sections}/>
-                <form id={formId} onSubmit={handleSubmit(onSubmit)}>
-                    <input
-                        ref={(el) => {
-                            if (el !== null) isDirtyChecker.current = el;
-                            ref(el);
-                        }}
-                        {...rest}
-                    />
-                    {sections.map(
-                        (
-                            {title, fields}: { title: string; fields: Array<IField> },
-                            index
-                        ) => {
-                            return (
-                                <Grid
-                                    key={`${title}_${index}`}
-                                    container
-                                    direction="row"
-                                    alignItems="flex-start"
-                                    spacing={2}
-                                >
-                                    {title !== undefined && (
-                                        <Grid item xs={12}>
-                                            <Typography
-                                                color="primary"
-                                                variant="h3"
-                                            >
-                                                {title}
-                                            </Typography>
-                                        </Grid>
-                                    )}
-                                    {fields.map((field) => {
-                                        const {
-                                            customValidationFunctions,
-                                            ...rest
-                                        } = field.validation;
+            <FormProvider {...formMethods}>
+                <>
+                    <PersistenceHandler activatePersistence={activatePersistence}
+                                        persistenceKey={persistenceKey}
+                                        sections={sections}/>
+                    <form id={formId} onSubmit={handleSubmit(onSubmit)}>
+                        {sections.map(
+                            (
+                                {title, fields}: { title: string; fields: Array<IField> },
+                                index
+                            ) => {
+                                return (
+                                    <Grid
+                                        key={`${title}_${index}`}
+                                        container
+                                        direction="row"
+                                        alignItems="flex-start"
+                                        spacing={2}
+                                        sx={{paddingBottom: 4}}
+                                    >
+                                        {title !== undefined && (
+                                            <Grid item xs={12}>
+                                                <Typography
+                                                    color="primary"
+                                                    variant="h3"
+                                                    sx={theme => ({
+                                                        fontWeight: 500,
+                                                        fontSize: 20,
+                                                        textTransform: 'uppercase',
+                                                        borderBottom: '1px solid ' + alpha(theme.palette.primary.main, 0.3),
+                                                        mt: 3,
+                                                        mb: 1,
+                                                    })}
+                                                >
+                                                    {title}
+                                                </Typography>
+                                            </Grid>
+                                        )}
+                                        {fields.map((field) => {
+                                            const {
+                                                customValidationFunctions,
+                                                ...rest
+                                            } = field.validation;
 
-                                        const error = errors[field.key];
-                                        const loading = loadingFields.includes(field.key);
+                                            const loading = loadingFields.includes(field.key);
 
-                                        const validationRules = {
-                                            ...(customValidationFunctions !== undefined &&
-                                                joinInCustomValidation(customValidationFunctions)),
-                                            ...rest,
-                                        };
+                                            const validationRules = {
+                                                ...(customValidationFunctions !== undefined &&
+                                                    joinInCustomValidation(customValidationFunctions)),
+                                                ...rest,
+                                            };
 
-                                        return (
-                                            <FieldComponent
-                                                key={field.key}
-                                                control={control}
-                                                defaultValue={initialValues[field.key] ?? ''}
-                                                error={error}
-                                                loading={loading}
-                                                onResetError={clearErrors}
-                                                onSetError={setError}
-                                                field={field}
-                                                rules={
-                                                    field.type === FIELD_TYPES.GEOMETRY
-                                                        ? validationRules
-                                                        : undefined
-                                                }
-                                                register={(name: string) =>
-                                                    register(name, validationRules)
-                                                }
-                                                setFormIsDirty={handleDirtyForm}
-                                                variant={variant}
-                                            />
-                                        );
-                                    })}
-                                </Grid>
-                            );
-                        }
-                    )}
-                </form>
-            </>
+                                            return (
+                                                <FieldComponent
+                                                    key={field.key}
+                                                    defaultValue={initialValues[field.key] ?? ''}
+                                                    loading={loading}
+                                                    field={field}
+                                                    rules={
+                                                        field.type === FIELD_TYPES.GEOMETRY
+                                                            ? validationRules
+                                                            : undefined
+                                                    }
+                                                    setFormIsDirty={handleDirtyForm}
+                                                    variant={variant}
+                                                />
+                                            );
+                                        })}
+                                    </Grid>
+                                );
+                            }
+                        )}
+                    </form>
+                </>
+            </FormProvider>
         </ErrorBoundary>
     );
 }

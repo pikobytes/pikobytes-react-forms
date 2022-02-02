@@ -11,6 +11,7 @@ import { ERROR_MESSAGE_KEY } from './ErrorMessages';
 import { E_VALIDATION_FUNCTION_REGISTRY } from '../configuration/ValidationFunctionConfiguration';
 import { EFormats } from '../../typedefs/configuration';
 import {ISuggestionUploadAutosuggest, PREVIEW_TYPE} from "./typedefs";
+import {UseFormRegisterReturn} from "react-hook-form";
 
 export interface IOption {
   description?: string;
@@ -23,6 +24,59 @@ export interface ISection {
   title: string;
   fields: Array<IField>;
 }
+
+type variant = 'filled' | 'outlined' | 'standard';
+type size = 'small' | 'medium';
+
+export interface IError {
+  type: string;
+  message: string;
+}
+
+export interface ITagValue {
+  tags: Array<string>;
+  tagsToDelete?: Array<string>;
+}
+
+// props every field expects
+export interface IGenericField<UiSettings, CustomProperties> {
+  customProperties: CustomProperties;
+  loading?: boolean;
+  fieldId: string;
+  fieldType: FIELD_TYPES;
+  uiSettings: UiSettings;
+  validation: IValidation;
+}
+
+export interface IDefaultUiSettings {
+  columns?: number;
+  description?: string;
+  format: EFormats;
+  label: string;
+  placeholder?: string;
+  size?: size;
+  variant: variant;
+}
+
+export interface ITextField<T> extends IGenericField<T, ITextFieldCustomProperties>{}
+
+export interface IOutsideRegisterAllowedProperties {
+  registerReturn?: UseFormRegisterReturn;
+}
+
+
+export interface ITextFieldCustomProperties extends IOutsideRegisterAllowedProperties{
+  accept?: string;
+  multiple?: boolean;
+  rows?: number;
+  step?: number;
+}
+
+export interface ISelectCustomProperties extends IOutsideRegisterAllowedProperties {
+  options: Array<IOption>
+}
+
+
 
 export interface IField {
   accept?: string;

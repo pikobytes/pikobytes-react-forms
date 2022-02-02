@@ -9,10 +9,22 @@ import React from 'react';
 import Form from "./Form";
 import FIELD_TYPES from "../../typedefs/FieldTypes";
 import Field from "../Field/Field";
+import {FormProvider, useForm} from 'react-hook-form';
 
 export default {
     title: "Example/Form",
     component: Form,
+}
+
+export function FormProviderWrapper({
+                                        children,
+                                        defaultValues
+                                    }: { children: JSX.Element, defaultValues: { [key: string]: string } }) {
+    const methods = useForm({defaultValues});
+
+    return <FormProvider {...methods}>
+        {children}
+    </FormProvider>
 }
 
 function Template(args: any) {
@@ -26,5 +38,48 @@ Default.args = {
     FieldComponent: Field,
     initialValues: {},
     loadingFields: [],
-    sections: [{title: "General", fields: [{ key: "test", type: FIELD_TYPES.TEXTFIELD, validation: {} }]}]
+    sections: [{title: "General", fields: [{key: "test", type: FIELD_TYPES.TEXTFIELD, validation: {}}]}]
 };
+
+
+export const MultipleFields = Template.bind({});
+// @ts-ignore
+MultipleFields.args = {
+    FieldComponent: Field,
+    initialValues: {test_2: "1"},
+    loadingFields: [],
+    onSetIsDirty: (e) => {
+        console.log(e)
+    },
+    sections: [{
+        title: "General",
+        fields: [{key: "test", type: FIELD_TYPES.TEXTFIELD, validation: {}}, {
+            label: "test",
+            key: "test_2",
+            type: FIELD_TYPES.SELECT,
+            options: [{label: "test 1", value: 1}, {label: "test 2", value: 2}],
+            validation: {}
+        }]
+    }]
+};
+
+export const CheckboxFields = Template.bind({});
+// @ts-ignore
+CheckboxFields.args = {
+    FieldComponent: Field,
+    initialValues: {test_2: true},
+    loadingFields: [],
+    onSetIsDirty: (e) => {
+        console.log(e)
+    },
+    sections: [{
+        title: "General",
+        fields: [{key: "test", type: FIELD_TYPES.BOOL, validation: {}}, {
+            label: "test",
+            key: "test_2",
+            type: FIELD_TYPES.BOOL,
+            validation: {}
+        }]
+    }]
+};
+

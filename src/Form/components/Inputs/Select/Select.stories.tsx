@@ -7,6 +7,7 @@
 import React from 'react';
 
 import Select from "./Select";
+import {FormProviderWrapper} from "../../Form/Form.stories";
 
 export default {
     title: "Example/Select",
@@ -14,7 +15,9 @@ export default {
 }
 
 function Template(args: any) {
-    return <Select {...args} />
+    return <FormProviderWrapper>
+        <Select {...args} />
+    </FormProviderWrapper>
 }
 
 
@@ -22,8 +25,15 @@ export const Default = Template.bind({});
 // @ts-ignore
 Default.args = {
     field: {
+        options: [{label: "test 1"}, {label: "test 2", value: 3}, {label: "test 3", value: 1}],
+        label: "Test Select",
         key: "test",
-        validation: { required: false}
+        validation: {required: false}
     },
-    register: () => { return { ref: React.createRef()}},
+    register: () => {
+        return {
+            ref: () => {
+            }
+        }
+    },
 };

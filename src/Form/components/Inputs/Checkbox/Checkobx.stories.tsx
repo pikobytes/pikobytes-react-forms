@@ -7,6 +7,7 @@
 import React from 'react';
 
 import Checkbox from "./Checkbox";
+import {FormProviderWrapper} from "../../Form/Form.stories";
 
 export default {
     title: "Example/Checkbox",
@@ -14,16 +15,30 @@ export default {
 }
 
 function Template(args: any) {
-    return <Checkbox {...args} />
+    return <FormProviderWrapper defaultValues={args.defaultValues}><Checkbox {...args} /></FormProviderWrapper>
 }
 
 
 export const Default = Template.bind({});
 // @ts-ignore
 Default.args = {
-    field: {
-        key: "test",
-        validation: { required: false}
+    fieldId: "test",
+    uiSettings: {
+        label: "test",
     },
-    register: () => { return { ref: React.createRef()}},
+    validation: { required: false}
 };
+
+
+
+export const WithDefaultValue = Template.bind({});
+// @ts-ignore
+WithDefaultValue.args = {
+    defaultValues: {test: true},
+    fieldId: "test",
+    uiSettings: {
+        label: "test",
+    },
+    validation: { required: false}
+};
+

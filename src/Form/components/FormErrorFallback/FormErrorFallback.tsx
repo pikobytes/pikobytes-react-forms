@@ -13,13 +13,6 @@ import {
 } from '@mui/material';
 import { FallbackProps } from 'react-error-boundary';
 
-// const useStyles = makeStyles((theme: Theme) =>
-//   createStyles({
-//     title: {
-//       marginBottom: theme.spacing(2),
-//     },
-//   })
-// );
 
 export function FormErrorFallback({
   error,
@@ -28,7 +21,7 @@ export function FormErrorFallback({
 
   return (
     <Grid item xs={12}>
-      <Typography variant="h4">
+      <Typography sx={{mb: 2}} variant="h4">
         Something went wrong:
       </Typography>
       <Typography align="center" variant="h6">
