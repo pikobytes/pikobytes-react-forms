@@ -6,25 +6,31 @@
  */
 
 import React, {
-    FunctionComponent,
-    useEffect,
-    useRef,
+    useEffect, useMemo,
     useState,
 } from 'react';
 import {FormProvider, useForm} from 'react-hook-form';
 import {alpha, Grid, Typography} from '@mui/material';
 import {ErrorBoundary} from 'react-error-boundary';
+import AdapterDateFns from "@mui/lab/AdapterDateFns";
+import { LocalizationProvider } from "@mui/lab";
 
-import {IField, ISection} from '../../typedefs/IField';
+import {IDefaultUiSettings, IGenericField} from '../../typedefs/IField';
 import {joinInCustomValidation} from '../../util/validation';
-import FIELD_TYPES from '../../typedefs/FieldTypes';
 import FormErrorFallback from '../FormErrorFallback/FormErrorFallback';
 import {usePrevious} from "../../hooks";
 import PersistenceHandler from "./components/PersistenceHandler/PersistenceHandler";
+import {mapField} from "../../util/fieldMapper";
+import {
+    validateFieldConfiguration,
+    validateUiConfiguration
+} from "../../util/ConfigurationParser";
 
 interface FormProps {
     activatePersistence?: boolean;
-    FieldComponent: FunctionComponent<any>;
+    configuration: Object,
+    uiConfiguration: Object,
+    customMapping?: { [key: string]: React.ComponentType<IGenericField<IDefaultUiSettings, any>> },
     fieldsToWatch: Array<string>;
     formId: string;
     initialValues: {
@@ -40,7 +46,6 @@ interface FormProps {
     onSubmit: (data: any) => void;
     onUpdateResetForm?: (e: any) => void;
     persistenceKey: string;
-    sections: Array<ISection>;
     variant?: 'filled' | 'outlined' | 'standard';
 }
 
@@ -52,7 +57,9 @@ const cloneValues = (val: any) =>
 export default function Form(props: FormProps) {
     const {
         activatePersistence = false,
-        FieldComponent,
+        configuration,
+        uiConfiguration,
+        customMapping,
         fieldsToWatch,
         formId,
         initialValues,
@@ -62,7 +69,6 @@ export default function Form(props: FormProps) {
         onSubmit,
         onUpdateResetForm,
         persistenceKey,
-        sections,
         variant,
     } = props;
 
@@ -79,7 +85,7 @@ export default function Form(props: FormProps) {
         watch,
     } = formMethods;
     const [blockPublish, setBlockPublish] = useState<boolean>(false);
-    const { dirtyFields } = formState;
+    const {dirtyFields} = formState;
 
     const isDirty = Object.keys(dirtyFields).length > 0;
 
@@ -92,6 +98,11 @@ export default function Form(props: FormProps) {
 
     // register manual dirty trigger value
     formMethods.register(MANUAL_DIRTY_TRIGGER_ID);
+
+    const fieldConfigs = useMemo(() => validateFieldConfiguration(configuration), [configuration]);
+    const uiSettings = useMemo(() => validateUiConfiguration(uiConfiguration), [uiConfiguration]);
+
+    const sections = uiSettings.sections ?? [{fields: Object.keys(fieldConfigs)}];
 
     //
     // Handler section
@@ -130,7 +141,7 @@ export default function Form(props: FormProps) {
                 setValue,
             });
         }
-    }, [blockPublish, fieldValues]);
+    }, [blockPublish, fieldValues, onPublishValues, previousFieldValues, setValue]);
 
     //
     // Outside propagation
@@ -138,15 +149,15 @@ export default function Form(props: FormProps) {
 
     // propagate isDirty changes to outside components
     useEffect(() => {
-        if(onSetIsDirty){
-        onSetIsDirty(isDirty);
+        if (onSetIsDirty) {
+            onSetIsDirty(isDirty);
         }
-    }, [isDirty]);
+    }, [isDirty, onSetIsDirty]);
 
     // propagate reset function to outside components
     useEffect(() => {
-        if(onUpdateResetForm !== undefined){
-        onUpdateResetForm(reset);
+        if (onUpdateResetForm !== undefined) {
+            onUpdateResetForm(reset);
         }
     }, [onUpdateResetForm, reset]);
 
@@ -158,85 +169,86 @@ export default function Form(props: FormProps) {
             // the "isDirty" - check is triggered by a change/blur
             //  -> focus and blur field in order to trigger an update of isDirty after
             //  receiving new initial Values
-    }, [initialValues]);
+        },
+        [initialValues, reset]);
 
 
     return (
         <ErrorBoundary FallbackComponent={FormErrorFallback} onReset={handleReset}>
             <FormProvider {...formMethods}>
-                <>
-                    <PersistenceHandler activatePersistence={activatePersistence}
-                                        persistenceKey={persistenceKey}
-                                        sections={sections}/>
-                    <form id={formId} onSubmit={handleSubmit(onSubmit)}>
-                        {sections.map(
-                            (
-                                {title, fields}: { title: string; fields: Array<IField> },
-                                index
-                            ) => {
-                                return (
-                                    <Grid
-                                        key={`${title}_${index}`}
-                                        container
-                                        direction="row"
-                                        alignItems="flex-start"
-                                        spacing={2}
-                                        sx={{paddingBottom: 4}}
-                                    >
-                                        {title !== undefined && (
-                                            <Grid item xs={12}>
-                                                <Typography
-                                                    color="primary"
-                                                    variant="h3"
-                                                    sx={theme => ({
-                                                        fontWeight: 500,
-                                                        fontSize: 20,
-                                                        textTransform: 'uppercase',
-                                                        borderBottom: '1px solid ' + alpha(theme.palette.primary.main, 0.3),
-                                                        mt: 3,
-                                                        mb: 1,
-                                                    })}
-                                                >
-                                                    {title}
-                                                </Typography>
-                                            </Grid>
-                                        )}
-                                        {fields.map((field) => {
-                                            const {
-                                                customValidationFunctions,
-                                                ...rest
-                                            } = field.validation;
+                <LocalizationProvider dateAdapter={AdapterDateFns}>
+                    <>
+                        <PersistenceHandler activatePersistence={activatePersistence}
+                                            fieldConfigs={fieldConfigs}
+                                            persistenceKey={persistenceKey}
+                                            sections={sections}/>
+                        <form id={formId} onSubmit={handleSubmit(onSubmit)}>
+                            {sections.map(
+                                ({title, fields}, index) => {
+                                    return (
+                                        <Grid
+                                            key={`${title}_${index}`}
+                                            container
+                                            direction="row"
+                                            alignItems="flex-start"
+                                            spacing={2}
+                                            sx={{paddingBottom: 4}}
+                                        >
+                                            {title !== undefined && (
+                                                <Grid item xs={12}>
+                                                    <Typography
+                                                        color="primary"
+                                                        variant="h3"
+                                                        sx={theme => ({
+                                                            fontWeight: 500,
+                                                            fontSize: 20,
+                                                            textTransform: 'uppercase',
+                                                            borderBottom: '1px solid ' + alpha(theme.palette.primary.main, 0.3),
+                                                            mt: 3,
+                                                            mb: 1,
+                                                        })}
+                                                    >
+                                                        {title}
+                                                    </Typography>
+                                                </Grid>
+                                            )}
+                                            {fields.map((field) => {
+                                                const {customProperties, fieldType, validation} = fieldConfigs[field];
 
-                                            const loading = loadingFields.includes(field.key);
+                                                const {
+                                                    customValidationFunctions,
+                                                    ...rest
+                                                } = validation;
 
-                                            const validationRules = {
-                                                ...(customValidationFunctions !== undefined &&
-                                                    joinInCustomValidation(customValidationFunctions)),
-                                                ...rest,
-                                            };
 
-                                            return (
-                                                <FieldComponent
-                                                    key={field.key}
-                                                    defaultValue={initialValues[field.key] ?? ''}
-                                                    loading={loading}
-                                                    field={field}
-                                                    rules={
-                                                        field.type === FIELD_TYPES.GEOMETRY
-                                                            ? validationRules
-                                                            : undefined
-                                                    }
-                                                    setFormIsDirty={handleDirtyForm}
-                                                    variant={variant}
-                                                />
-                                            );
-                                        })}
-                                    </Grid>
-                                );
-                            }
-                        )}
-                    </form>
-                </>
+                                                const loading = loadingFields !== undefined && loadingFields.includes(field);
+
+                                                const validationRules = {
+                                                    ...(customValidationFunctions !== undefined &&
+                                                        joinInCustomValidation(customValidationFunctions)),
+                                                    ...rest,
+                                                };
+
+                                                const FieldComponent = mapField(fieldType, customMapping)
+
+                                                return (
+                                                    <FieldComponent
+                                                        customProperties={customProperties}
+                                                        loading={loading}
+                                                        fieldId={field}
+                                                        fieldType={fieldType}
+                                                        uiSettings={Object.assign({}, {variant}, uiSettings[field])}
+                                                        validation={validationRules}
+                                                    />
+                                                );
+                                            })}
+                                        </Grid>
+                                    );
+                                }
+                            )}
+                        </form>
+                    </>
+                </LocalizationProvider>
             </FormProvider>
         </ErrorBoundary>
     );

@@ -21,8 +21,8 @@ export interface IOption {
 }
 
 export interface ISection {
-  title: string;
-  fields: Array<IField>;
+  title?: string;
+  fields: Array<string>;
 }
 
 type variant = 'filled' | 'outlined' | 'standard';
@@ -76,7 +76,15 @@ export interface ISelectCustomProperties extends IOutsideRegisterAllowedProperti
   options: Array<IOption>
 }
 
+export interface ISpecialEditBehaviorProperties {
+  isEdit?: boolean;
+}
 
+export interface ITagManagementUiSettings extends IDefaultUiSettings{
+  addButtonTooltip?: string;
+}
+
+export interface ITagManagement<T> extends IGenericField<T, ISpecialEditBehaviorProperties>{}
 
 export interface IField {
   accept?: string;

@@ -1,0 +1,19 @@
+{
+  "title": {
+    "format": "path",
+    "label": "Titel",
+    "placeholder": "Title der Aufnahme"
+  },
+  "captureTimestamp": {
+    "format": "datetime-local",
+    "label": "Aufnahmezeitpunkt"
+  },
+  "sensor": {
+    "format": "string",
+    "label": "Sensor"
+  },
+  "dataType": {
+    "format": "string",
+    "label": "Daten-Art"
+  }
+}

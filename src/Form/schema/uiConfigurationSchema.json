@@ -1,0 +1,57 @@
+{
+  "type": "object",
+  "properties": {
+    "sections": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "fields": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    }
+  },
+  "patternProperties": {
+    "^(?!sections$).*$": {
+      "type": "object",
+      "properties": {
+        "columns": {
+          "type": "number"
+        },
+        "description": {
+          "type": "string"
+        },
+        "format": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string"
+        },
+        "placeholder": {
+          "type": "string"
+        },
+        "size": {
+          "enum": [
+            "small",
+            "medium"
+          ]
+        },
+        "variant": {
+          "enum": [
+            "outlined",
+            "filled",
+            "standard"
+          ]
+        }
+      }
+    }
+  }
+}

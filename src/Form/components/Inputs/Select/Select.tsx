@@ -73,7 +73,7 @@ export default function Select({
             size={size}
             variant={variant}
         >
-            <InputLabel htmlFor={label} shrink sx={theme => ({backgroundColor: theme.palette.background.default})}>
+            <InputLabel htmlFor={label} shrink >
                 {label}
             </InputLabel>
             <MUISelect

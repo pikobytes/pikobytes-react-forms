@@ -5,20 +5,21 @@
  * file 'LICENSE.txt', which is part of this source code package.
  */
 import {useCallback, useEffect} from "react";
+import {useFormContext} from "react-hook-form";
 
 import FIELD_TYPES from "../../../../typedefs/FieldTypes";
 import {useLocalStorage} from "../../../../hooks";
-import {IField} from "../../../../typedefs/IField";
-import {useFormContext} from "react-hook-form";
+import {IGenericField, ISection} from "../../../../typedefs/IField";
 
 interface PersistenceHandlerProps {
     activatePersistence: boolean;
+    fieldConfigs: {[key: string]: IGenericField<any, any>};
     persistenceKey: string;
-    sections: Array<{title: string, fields: Array<IField>}>
+    sections: Array<ISection>
 }
 
 
-export const PersistenceHandler = ({activatePersistence, persistenceKey, sections } : PersistenceHandlerProps) => {
+export const PersistenceHandler = ({activatePersistence, fieldConfigs, persistenceKey, sections } : PersistenceHandlerProps) => {
     const { getValues, formState, reset } = useFormContext();
     const { isSubmitting, isSubmitted} = formState;
 
@@ -39,8 +40,9 @@ export const PersistenceHandler = ({activatePersistence, persistenceKey, section
         const fileFields: Array<string> = [];
         sections.forEach((section) => {
             section.fields.forEach((field) => {
-                if (field.type === FIELD_TYPES.FILE) {
-                    fileFields.push(field.key);
+                const { fieldType } = fieldConfigs[field];
+                if (fieldType === FIELD_TYPES.FILE) {
+                    fileFields.push(field);
                 }
             });
         });
@@ -56,7 +58,7 @@ export const PersistenceHandler = ({activatePersistence, persistenceKey, section
         if (!isSubmitting && !isSubmitted) {
             setPersistedLocalForm(fieldsToPersist);
         }
-    }, [isSubmitted, isSubmitting]);
+    }, [fieldConfigs, getValues, isSubmitted, isSubmitting, sections, setPersistedLocalForm]);
 
 
     //
@@ -98,7 +100,7 @@ export const PersistenceHandler = ({activatePersistence, persistenceKey, section
         if (!isSubmitted && !isSubmitting && persistedLocalForm !== undefined) {
             reset(persistedLocalForm);
         }
-    }, [activatePersistence, isSubmitting, isSubmitted]);
+    }, [activatePersistence, persistedLocalForm, isSubmitting, isSubmitted, reset]);
 
     // delete the entry from local storage after submission
     useEffect(() => {
@@ -106,7 +108,7 @@ export const PersistenceHandler = ({activatePersistence, persistenceKey, section
         if (isSubmitted && activatePersistence) {
             localStorage.removeItem(persistenceKey);
         }
-    }, [activatePersistence, isSubmitted]);
+    }, [activatePersistence, persistenceKey, isSubmitted]);
 
     return <></>
 }

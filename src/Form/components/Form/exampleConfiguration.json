@@ -1,0 +1,50 @@
+{
+  "title": {
+    "fieldType": "string",
+    "validation": {
+      "required": true
+    }
+  },
+  "captureTimestamp": {
+    "fieldType": "datetime-local",
+    "validation": {
+      "required": true
+    }
+  },
+  "sensor": {
+    "customProperties": {
+      "options": [
+        {
+          "label": "Sensor 1",
+          "value": "1"
+        },
+        {
+          "label": "Sensor 2",
+          "value": "2"
+        }
+      ]
+    },
+    "fieldType": "select",
+    "validation": {
+      "required": true
+    }
+  },
+  "dataType": {
+    "customProperties": {
+      "options": [
+        {
+          "label": "RGB",
+          "value": "1"
+        },
+        {
+          "label": "Laser",
+          "value": "2"
+        }
+      ]
+    },
+    "fieldType": "select",
+    "validation": {
+      "required": true
+    }
+  }
+}

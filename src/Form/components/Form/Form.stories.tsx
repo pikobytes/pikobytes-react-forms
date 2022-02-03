@@ -8,8 +8,9 @@ import React from 'react';
 
 import Form from "./Form";
 import FIELD_TYPES from "../../typedefs/FieldTypes";
-import Field from "../Field/Field";
 import {FormProvider, useForm} from 'react-hook-form';
+import { default as exampleConfiguration} from "./exampleConfiguration.json";
+import { default as exampleUiConfiguration} from "./exampleUiConfiguration.json";
 
 export default {
     title: "Example/Form",
@@ -35,20 +36,17 @@ function Template(args: any) {
 export const Default = Template.bind({});
 // @ts-ignore
 Default.args = {
-    FieldComponent: Field,
-    initialValues: {},
-    loadingFields: [],
-    sections: [{title: "General", fields: [{key: "test", type: FIELD_TYPES.TEXTFIELD, validation: {}}]}]
+    configuration: exampleConfiguration,
+    uiConfiguration: exampleUiConfiguration,
 };
 
 
 export const MultipleFields = Template.bind({});
 // @ts-ignore
 MultipleFields.args = {
-    FieldComponent: Field,
     initialValues: {test_2: "1"},
     loadingFields: [],
-    onSetIsDirty: (e) => {
+    onSetIsDirty: (e: any) => {
         console.log(e)
     },
     sections: [{
@@ -66,10 +64,9 @@ MultipleFields.args = {
 export const CheckboxFields = Template.bind({});
 // @ts-ignore
 CheckboxFields.args = {
-    FieldComponent: Field,
     initialValues: {test_2: true},
     loadingFields: [],
-    onSetIsDirty: (e) => {
+    onSetIsDirty: (e: any) => {
         console.log(e)
     },
     sections: [{

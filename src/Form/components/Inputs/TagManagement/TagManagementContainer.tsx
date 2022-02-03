@@ -6,22 +6,25 @@
  */
 
 import React from 'react';
-import { ControllerRenderProps } from 'react-hook-form';
+import { useController } from 'react-hook-form';
 
 import TagManagement from './TagManagement';
-import { IField } from '../../../typedefs/IField';
+import {IDefaultUiSettings, ITagManagement} from '../../../typedefs/IField';
 import { ITagObject } from './typedefs';
 import {isFieldSet} from "../../../util/fieldAccess";
 
-export interface TagManagementContainerProps {
-  field: IField;
-  formField: ControllerRenderProps;
-  variant?: 'filled' | 'outlined' | 'standard';
-}
 
-export function TagManagementContainer(props: TagManagementContainerProps) {
-  const { field, formField, ...rest } = props;
-  const { onChange, value } = formField;
+export function TagManagementContainer(props: ITagManagement<IDefaultUiSettings>) {
+  const {
+    customProperties: {
+      isEdit,
+    },
+    fieldId,
+
+  } = props;
+
+  const { field } = useController({name: fieldId});
+  const { value, onChange } = field;
 
   const onTagCreate = (tag: string, tagObject: ITagObject) => {
     tagObject.tags.push(tag);
@@ -29,7 +32,7 @@ export function TagManagementContainer(props: TagManagementContainerProps) {
   };
 
   const onTagRemove = (tagToDelete: string, tagObject: ITagObject) => {
-    if (field.isEdit) {
+    if (isEdit) {
       tagObject.tagsToDelete.push(tagToDelete);
     } else {
       tagObject.tags = tagObject.tags.filter((tag) => tag !== tagToDelete);
@@ -51,13 +54,12 @@ export function TagManagementContainer(props: TagManagementContainerProps) {
 
   return (
     <TagManagement
-      field={field}
       onTagCreate={onTagCreate}
       onTagRemove={onTagRemove}
       onTagRemoveReversed={onTagRemoveAbort}
       tags={tags}
       tagsToDelete={tagsToDelete}
-      {...rest}
+      {...props}
     />
   );
 }

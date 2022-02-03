@@ -35,11 +35,7 @@ export default function TextField(
     props: ITextField<IDefaultUiSettings> & { endAdornments?: Array<React.ComponentType> }
 ) {
     const {
-        customProperties: {
-            registerReturn,
-            rows,
-            ...otherCustomProperties
-        },
+        customProperties,
         fieldId,
         endAdornments = [],
         fieldType,
@@ -57,6 +53,12 @@ export default function TextField(
     } = props;
 
     const {register} = useFormContext();
+
+    const {
+        registerReturn,
+        rows,
+        ...otherCustomProperties
+    } = customProperties ?? {};
 
     if (register === undefined && registerReturn === undefined) {
         throw new Error('Either register or registerReturn must be supplied');

@@ -12,11 +12,11 @@ import {
     TextField,
 } from '@mui/material';
 import {Event} from '@mui/icons-material';
-import {DateTimePicker as MUIDateTimePicker} from '@mui/lab';
-import {ControllerRenderProps, useController, useFormContext} from 'react-hook-form';
+import {DateTimePicker as MUIDateTimePicker } from '@mui/lab';
+import { useController, useFormContext} from 'react-hook-form';
 import formatISO from 'date-fns/formatISO';
 
-import {IDefaultUiSettings, IField, IGenericField} from '../../../typedefs/IField';
+import {IDefaultUiSettings, IGenericField} from '../../../typedefs/IField';
 
 export function DateTimePicker({
                                    fieldId,
