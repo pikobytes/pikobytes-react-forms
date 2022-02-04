@@ -8,7 +8,29 @@ import Ajv from 'ajv';
 
 import {default as configurationSchema} from "../schema/configurationSchema.json";
 import {default as uiConfigurationSchema} from "../schema/uiConfigurationSchema.json";
-import {IDefaultUiSettings, IGenericField, ISection} from "../typedefs/IField";
+import {IDefaultUiSettings, IGenericField, ISection, IStringIndexableObject} from "../typedefs/IField";
+import FIELD_TYPES from "../typedefs/FieldTypes";
+
+const parseField = (field: { fieldType: string } & IStringIndexableObject<any>) => {
+    switch (field.fieldType) {
+        case FIELD_TYPES.SELECT:
+            const newCustomProperties = Object.assign({}, field.customProperties, {options: field?.options});
+
+            return Object.assign({}, field, {customProperties: newCustomProperties});
+        default:
+            return field;
+    }
+}
+
+const parseSpecialConfigurationFields = (validConfiguration: any) => {
+    const parsedConfiguration: IStringIndexableObject<IGenericField<any, any>> = {};
+
+    Object.keys(validConfiguration).forEach(field => {
+        parsedConfiguration[field] = parseField(validConfiguration[field]) as IGenericField<any, any>;
+    })
+
+    return parsedConfiguration;
+}
 
 
 export const validateConfiguration = (configuration: any, schema: Object) => {
@@ -31,5 +53,7 @@ export const validateUiConfiguration = (configuration: any) => {
 }
 
 export const validateFieldConfiguration = (configuration: any) => {
-    return validateConfiguration(configuration, configurationSchema) as { [key: string]: IGenericField<any, any> };
+    const validConfiguration = validateConfiguration(configuration, configurationSchema);
+
+    return parseSpecialConfigurationFields(validConfiguration) as { [key: string]: IGenericField<any, any> };
 }

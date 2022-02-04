@@ -20,6 +20,8 @@ export interface IOption {
   value: string | number;
 }
 
+export type IStringIndexableObject<T> = { [k: string]: T }
+
 export interface ISection {
   title?: string;
   fields: Array<string>;
@@ -38,9 +40,13 @@ export interface ITagValue {
   tagsToDelete?: Array<string>;
 }
 
+export type IFieldConfig = IStringIndexableObject<IGenericField<any, any>>;
+
+
 // props every field expects
 export interface IGenericField<UiSettings, CustomProperties> {
   customProperties: CustomProperties;
+  defaultValue?: string;
   loading?: boolean;
   fieldId: string;
   fieldType: FIELD_TYPES;

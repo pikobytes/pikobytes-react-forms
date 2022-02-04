@@ -1,7 +1,7 @@
 {
   "type": "object",
   "patternProperties": {
-    "^(?!validation|fieldType$).*$": {
+    "^(?!validation|fieldType|defaultValue$).*$": {
       "type": "object",
       "if": {
         "properties": {
@@ -12,45 +12,40 @@
       },
       "then": {
         "required": [
-          "customProperties"
+          "options"
         ],
         "properties": {
           "customProperties": {
-            "required": [
-              "options"
-            ],
-            "type": "object",
-            "properties": {
-              "options": {
-                "type": "array",
-                "minItems": 1,
-                "items": {
-                  "type": "object",
-                  "required": [
-                    "label",
-                    "value"
-                  ],
-                  "properties": {
-                    "description": {
-                      "type": "string"
+            "type": "object"
+          },
+          "options": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "required": [
+                "label",
+                "value"
+              ],
+              "properties": {
+                "description": {
+                  "type": "string"
+                },
+                "helperText": {
+                  "type": "string"
+                },
+                "label": {
+                  "type": "string"
+                },
+                "value": {
+                  "anyOf": [
+                    {
+                      "type": "number"
                     },
-                    "helperText": {
+                    {
                       "type": "string"
-                    },
-                    "label": {
-                      "type": "string"
-                    },
-                    "value": {
-                      "anyOf": [
-                        {
-                          "type": "number"
-                        },
-                        {
-                          "type": "string"
-                        }
-                      ]
                     }
-                  }
+                  ]
                 }
               }
             }
@@ -65,6 +60,9 @@
         }
       },
       "properties": {
+        "defaultValue": {
+          "type": "string"
+        },
         "fieldType": {
           "type": "string"
         },

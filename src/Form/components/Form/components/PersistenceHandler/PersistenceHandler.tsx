@@ -12,14 +12,13 @@ import {useLocalStorage} from "../../../../hooks";
 import {IGenericField, ISection} from "../../../../typedefs/IField";
 
 interface PersistenceHandlerProps {
-    activatePersistence: boolean;
     fieldConfigs: {[key: string]: IGenericField<any, any>};
     persistenceKey: string;
     sections: Array<ISection>
 }
 
 
-export const PersistenceHandler = ({activatePersistence, fieldConfigs, persistenceKey, sections } : PersistenceHandlerProps) => {
+export const PersistenceHandler = ({fieldConfigs, persistenceKey, sections } : PersistenceHandlerProps) => {
     const { getValues, formState, reset } = useFormContext();
     const { isSubmitting, isSubmitted} = formState;
 
@@ -67,11 +66,6 @@ export const PersistenceHandler = ({activatePersistence, fieldConfigs, persisten
 
     // register persistence handler or persist form
     useEffect(() => {
-        // ignore persistence if it is disabled
-        if (!activatePersistence) {
-            return;
-        }
-
         // see https://developers.google.com/web/updates/2018/07/page-lifecycle-api#the-unload-event for more information
         const terminationEvent =
             'onpagehide' in window.self ? 'pagehide' : 'unload';
@@ -87,28 +81,25 @@ export const PersistenceHandler = ({activatePersistence, fieldConfigs, persisten
             });
             handlePersistForm();
         };
-    }, [activatePersistence, handlePersistForm]);
+    }, [handlePersistForm]);
 
     // reset the form from local storage
     useEffect(() => {
         // ignore persistence if it is disabled
-        if (!activatePersistence) {
-            return;
-        }
 
         // reset form if its the first render
         if (!isSubmitted && !isSubmitting && persistedLocalForm !== undefined) {
             reset(persistedLocalForm);
         }
-    }, [activatePersistence, persistedLocalForm, isSubmitting, isSubmitted, reset]);
+    }, [persistedLocalForm, isSubmitting, isSubmitted, reset]);
 
     // delete the entry from local storage after submission
     useEffect(() => {
         // remove persisted form when it was submitted
-        if (isSubmitted && activatePersistence) {
+        if (isSubmitted) {
             localStorage.removeItem(persistenceKey);
         }
-    }, [activatePersistence, persistenceKey, isSubmitted]);
+    }, [persistenceKey, isSubmitted]);
 
     return <></>
 }

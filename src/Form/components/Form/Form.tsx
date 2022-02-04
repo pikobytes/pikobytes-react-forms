@@ -13,9 +13,9 @@ import {FormProvider, useForm} from 'react-hook-form';
 import {alpha, Grid, Typography} from '@mui/material';
 import {ErrorBoundary} from 'react-error-boundary';
 import AdapterDateFns from "@mui/lab/AdapterDateFns";
-import { LocalizationProvider } from "@mui/lab";
+import {LocalizationProvider} from "@mui/lab";
 
-import {IDefaultUiSettings, IGenericField} from '../../typedefs/IField';
+import {IDefaultUiSettings, IGenericField } from '../../typedefs/IField';
 import {joinInCustomValidation} from '../../util/validation';
 import FormErrorFallback from '../FormErrorFallback/FormErrorFallback';
 import {usePrevious} from "../../hooks";
@@ -25,36 +25,37 @@ import {
     validateFieldConfiguration,
     validateUiConfiguration
 } from "../../util/ConfigurationParser";
+import {cloneValues, getDefaultValues} from "./util";
 
-interface FormProps {
+
+interface IFormProps {
     activatePersistence?: boolean;
     configuration: Object,
     uiConfiguration: Object,
     customMapping?: { [key: string]: React.ComponentType<IGenericField<IDefaultUiSettings, any>> },
-    fieldsToWatch: Array<string>;
+    fieldsToWatch?: Array<string>;
     formId: string;
-    initialValues: {
+    initialValues?: {
         [key: string]: string;
     };
-    loadingFields: Array<string>;
-    onPublishValues: (
+    loadingFields?: Array<string>;
+    onPublishValues?: (
         fieldValues: Array<string>,
         previousFieldValues: Array<string>,
         options: { setValue: (field: string, newValue: string) => void }
     ) => void;
-    onSetIsDirty: (isDirty: boolean) => void;
+    onSetIsDirty?: (isDirty: boolean) => void;
     onSubmit: (data: any) => void;
     onUpdateResetForm?: (e: any) => void;
-    persistenceKey: string;
+    persistenceKey?: string;
     variant?: 'filled' | 'outlined' | 'standard';
 }
 
-const MANUAL_DIRTY_TRIGGER_ID = "MANUAL_DIRTY_TRIGGER"
+export const MANUAL_DIRTY_TRIGGER_ID = "MANUAL_DIRTY_TRIGGER"
 
-const cloneValues = (val: any) =>
-    typeof val === 'object' && val !== null ? Object.assign({}, val) : val;
 
-export default function Form(props: FormProps) {
+
+export default function Form(props: IFormProps) {
     const {
         activatePersistence = false,
         configuration,
@@ -72,8 +73,15 @@ export default function Form(props: FormProps) {
         variant,
     } = props;
 
+    const [blockPublish, setBlockPublish] = useState<boolean>(false);
+
+    const fieldConfigs = useMemo(() => validateFieldConfiguration(configuration), [configuration]);
+    const uiSettings = useMemo(() => validateUiConfiguration(uiConfiguration), [uiConfiguration]);
+
+    const defaultValues = getDefaultValues(initialValues, fieldConfigs);
+
     const formMethods = useForm({
-        defaultValues: Object.assign({[MANUAL_DIRTY_TRIGGER_ID]: ""}, initialValues),
+        defaultValues,
         shouldUnregister: true,
     });
 
@@ -84,7 +92,7 @@ export default function Form(props: FormProps) {
         setValue,
         watch,
     } = formMethods;
-    const [blockPublish, setBlockPublish] = useState<boolean>(false);
+
     const {dirtyFields} = formState;
 
     const isDirty = Object.keys(dirtyFields).length > 0;
@@ -99,8 +107,6 @@ export default function Form(props: FormProps) {
     // register manual dirty trigger value
     formMethods.register(MANUAL_DIRTY_TRIGGER_ID);
 
-    const fieldConfigs = useMemo(() => validateFieldConfiguration(configuration), [configuration]);
-    const uiSettings = useMemo(() => validateUiConfiguration(uiConfiguration), [uiConfiguration]);
 
     const sections = uiSettings.sections ?? [{fields: Object.keys(fieldConfigs)}];
 
@@ -178,10 +184,10 @@ export default function Form(props: FormProps) {
             <FormProvider {...formMethods}>
                 <LocalizationProvider dateAdapter={AdapterDateFns}>
                     <>
-                        <PersistenceHandler activatePersistence={activatePersistence}
-                                            fieldConfigs={fieldConfigs}
-                                            persistenceKey={persistenceKey}
-                                            sections={sections}/>
+                        {activatePersistence && <PersistenceHandler
+                            fieldConfigs={fieldConfigs}
+                            persistenceKey={persistenceKey ?? formId}
+                            sections={sections}/> }
                         <form id={formId} onSubmit={handleSubmit(onSubmit)}>
                             {sections.map(
                                 ({title, fields}, index) => {
