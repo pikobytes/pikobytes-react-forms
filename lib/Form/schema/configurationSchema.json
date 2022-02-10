@@ -101,7 +101,7 @@
                         }
                     },
                     "patternProperties": {
-                        "^(?!effect).*$": {
+                        "^(?!effect$).*$": {
                             "type": "object",
                             "additionalProperties": false,
                             "required": [
@@ -116,7 +116,8 @@
                                         "value",
                                         "values"
                                     ]
-                                }
+                                },
+                                "value": {}
                             },
                             "allOf": [
                                 {
@@ -131,11 +132,11 @@
                                         "properties": {
                                             "value": {
                                                 "type": "array",
-                                                "items": {
-                                                    "type": "number"
-                                                },
-                                                "minContains": 2,
-                                                "maxContains": 2
+                                                "items": false,
+                                                "prefixItems": [
+                                                    { "type": "number" },
+                                                    { "type": "number" }
+                                                ]
                                             }
                                         }
                                     }

@@ -10,7 +10,7 @@ import {Grid, IconButton, TextField, Tooltip} from '@mui/material';
 import {Add as AddIcon} from '@mui/icons-material';
 
 import Tag from './Tag';
-import { ITagManagement, ITagManagementUiSettings} from '../../../typedefs/IField';
+import {ITagManagement, ITagManagementUiSettings} from '../../../typedefs/IField';
 import {ITagObject} from './typedefs';
 
 interface ITagManagementProps {
@@ -29,9 +29,13 @@ export const TagManagement = (props: ITagManagement<ITagManagementUiSettings> & 
     const {
         uiSettings: {
             addButtonTooltip = "Add Tag",
+            disabled,
             label,
             placeholder,
             variant
+        },
+        validation: {
+            required,
         },
         onTagCreate,
         onTagRemove,
@@ -120,6 +124,7 @@ export const TagManagement = (props: ITagManagement<ITagManagementUiSettings> & 
                 <Grid alignItems="center" container spacing={1}>
                     <Grid item xs>
                         <TextField
+                            disabled={disabled}
                             fullWidth
                             inputProps={{
                                 className: 'input',
@@ -128,7 +133,7 @@ export const TagManagement = (props: ITagManagement<ITagManagementUiSettings> & 
                                 ref: inputRef,
                                 onKeyPress: onKeyPress,
                             }}
-                            InputLabelProps={{shrink: true}}
+                            InputLabelProps={{shrink: true, required: required !== false}}
                             label={label}
                             placeholder={placeholder}
                             variant={variant}

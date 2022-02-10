@@ -6,4 +6,4 @@
  */
 /// <reference types="react" />
 import { IDefaultUiSettings, IGenericField, ISelectCustomProperties } from "../../../typedefs/IField";
-export default function Select({ customProperties: { options, registerReturn }, fieldId, uiSettings: { label, placeholder, size, variant }, validation }: IGenericField<IDefaultUiSettings, ISelectCustomProperties>): JSX.Element;
+export default function Select({ customProperties: { options, registerReturn }, fieldId, uiSettings: { disabled, label, placeholder, size, variant }, validation }: IGenericField<IDefaultUiSettings, ISelectCustomProperties>): JSX.Element;

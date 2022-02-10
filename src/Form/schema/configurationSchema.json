@@ -1,7 +1,7 @@
 {
   "type": "object",
   "patternProperties": {
-    "^(?!validation|fieldType|defaultValue$).*$": {
+    "^(?!validation|fieldType|defaultValue|condition$).*$": {
       "type": "object",
       "if": {
         "properties": {
@@ -89,6 +89,151 @@
             }
           },
           "additionalProperties": false
+        },
+        "condition": {
+          "type": "object",
+          "properties": {
+            "effect": {
+              "enum": [
+                "display",
+                "enable"
+              ]
+            }
+          },
+          "patternProperties": {
+            "^(?!effect$).*$": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "type",
+                "value"
+              ],
+              "properties": {
+                "type": {
+                  "enum": [
+                    "range",
+                    "pattern",
+                    "value",
+                    "values"
+                  ]
+                },
+                "value": {}
+              },
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "type": {
+                        "const": "range"
+                      }
+                    }
+                  },
+                  "then": {
+                    "properties": {
+                      "value": {
+                        "type": "array",
+                        "items": false,
+                        "prefixItems": [
+                          {"type": "number"},
+                          {"type": "number"}
+                        ]
+                      }
+                    }
+                  }
+                },
+                {
+                  "if": {
+                    "properties": {
+                      "type": {
+                        "const": "value"
+                      }
+                    }
+                  },
+                  "then": {
+                    "properties": {
+                      "value": {
+                        "oneOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "number"
+                          },
+                          {
+                            "type": "boolean"
+                          }
+                        ]
+                      }
+                    }
+                  }
+                },
+                {
+                  "if": {
+                    "properties": {
+                      "type": {
+                        "const": "values"
+                      }
+                    }
+                  },
+                  "then": {
+                    "properties": {
+                      "value": {
+                        "type": "array",
+                        "items": {
+                          "oneOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "number"
+                            },
+                            {
+                              "type": "boolean"
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  }
+                },
+                {
+                  "if": {
+                    "properties": {
+                      "type": {
+                        "const": "pattern"
+                      }
+                    }
+                  },
+                  "then": {
+                    "properties": {
+                      "value": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              ]
+            },
+            "value": {
+              "oneOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "oneOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
+                  }
+                },
+                {
+                }
+              ]
+            }
+          }
         }
       },
       "required": [

@@ -40,11 +40,49 @@ export interface ITagValue {
   tagsToDelete?: Array<string>;
 }
 
+export enum E_CONDITION_EFFECTS {
+  DISPLAY = "display",
+  ENABLE = "enable",
+}
+
+export enum E_FIELD_CONDITION_TYPES {
+  RANGE = "range",
+  PATTERN = "pattern",
+  VALUE = "value",
+  VALUES = "values"
+}
+
+export interface IFieldCondition {
+  type:  E_FIELD_CONDITION_TYPES;
+  value: any;
+}
+
+export interface IRangeCondition extends IFieldCondition{
+  type: E_FIELD_CONDITION_TYPES.RANGE;
+  value: [number, number];
+}
+
+export interface IPatternCondition extends IFieldCondition{
+  type: E_FIELD_CONDITION_TYPES.PATTERN;
+  value: string;
+}
+
+export interface IValueCondition extends IFieldCondition {
+  type: E_FIELD_CONDITION_TYPES.VALUE;
+  value: string | number;
+}
+
+export interface IValuesCondition extends IFieldCondition {
+  type: E_FIELD_CONDITION_TYPES.VALUES;
+  value: Array<any>;
+}
+
 export type IFieldConfig = IStringIndexableObject<IGenericField<any, any>>;
 
 
 // props every field expects
 export interface IGenericField<UiSettings, CustomProperties> {
+  condition?: {[key: string]: IFieldCondition };
   customProperties: CustomProperties;
   defaultValue?: string;
   loading?: boolean;
@@ -57,6 +95,7 @@ export interface IGenericField<UiSettings, CustomProperties> {
 export interface IDefaultUiSettings {
   columns?: number;
   description?: string;
+  disabled?: boolean;
   format: EFormats;
   label: string;
   placeholder?: string;

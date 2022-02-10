@@ -12,7 +12,7 @@ import {
     InputAdornment,
     TextField as MUITextField,
 } from '@mui/material';
-import { useFormContext, UseFormRegisterReturn} from 'react-hook-form';
+import {useFormContext, UseFormRegisterReturn} from 'react-hook-form';
 
 
 import FIELD_TYPES from '../../../typedefs/FieldTypes';
@@ -41,6 +41,7 @@ export default function TextField(
         fieldType,
         loading,
         uiSettings: {
+            disabled,
             description,
             label,
             placeholder,
@@ -50,26 +51,26 @@ export default function TextField(
         validation,
     } = props;
 
-    const { register } = useFormContext();
+    const {register} = useFormContext();
 
     const {
         registerReturn,
         rows,
         ...otherCustomProperties
     } = customProperties ?? {};
-    const { required } = validation;
+    const {required} = validation;
 
     if (register === undefined && registerReturn === undefined) {
         throw new Error('Either register or registerReturn must be supplied');
     }
 
-    const { formState } = useFormContext();
-    const { errors } = formState;
+    const {formState} = useFormContext();
+    const {errors} = formState;
     const error = errors[fieldId];
 
     const {ref, ...rest} =
         register !== undefined
-            ? register(fieldId, validation)
+            ? register(fieldId, Object.assign({disabled, shouldUnregister: true}, validation))
             : (registerReturn as UseFormRegisterReturn);
 
     const isErroneous = error !== undefined;
@@ -84,7 +85,7 @@ export default function TextField(
     return (
         <React.Fragment>
             <MUITextField
-                // className={classes.root}
+                disabled={disabled}
                 error={isErroneous}
                 helperText={isErroneous ? error!.message : description}
                 inputRef={(e) => {
@@ -119,7 +120,7 @@ export default function TextField(
                 placeholder={placeholder === undefined ? label : placeholder}
                 fullWidth
                 size={size}
-                InputLabelProps={{shrink: true}}
+                InputLabelProps={{required: required !== false, shrink: true}}
                 type={getHTMLType(fieldType)}
                 variant={variant}
                 sx={(theme) => ({

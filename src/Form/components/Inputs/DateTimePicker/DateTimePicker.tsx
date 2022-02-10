@@ -21,6 +21,7 @@ import {IDefaultUiSettings, IGenericField} from '../../../typedefs/IField';
 export function DateTimePicker({
                                    fieldId,
                                    uiSettings: {
+                                       disabled,
                                        description,
                                        label,
                                        placeholder,
@@ -29,7 +30,7 @@ export function DateTimePicker({
                                    },
                                    validation,
                                }: IGenericField<IDefaultUiSettings, undefined>) {
-    const {field} = useController({name: fieldId, rules: validation});
+    const {field} = useController({name: fieldId, rules: Object.assign({disabled}, validation)});
     const {ref, value, onChange, ...rest} = field;
 
     const {formState} = useFormContext();
@@ -42,8 +43,9 @@ export function DateTimePicker({
     return (
         <MUIDateTimePicker
             clearable
+            disabled={disabled}
             renderInput={(props) => <TextField {...props}
-                                               required={required !== false}
+                                               InputLabelProps={{required: required !== false, shrink: true}}
                                                fullWidth
                                                helperText={error !== undefined ? error.message : description}
                                                placeholder={placeholder}

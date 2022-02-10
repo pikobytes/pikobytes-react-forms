@@ -5,27 +5,21 @@
  * file 'LICENSE.txt', which is part of this source code package.
  */
 
-import React, {
-    useEffect, useMemo,
-    useState
-} from "react";
+import React, {useEffect, useMemo, useState} from "react";
 import {FieldError, FormProvider, useForm} from "react-hook-form";
 import {alpha, Grid, Typography} from "@mui/material";
 import {ErrorBoundary} from "react-error-boundary";
 import AdapterDateFns from "@mui/lab/AdapterDateFns";
 import {LocalizationProvider} from "@mui/lab";
 
-import {IDefaultUiSettings, IGenericField, IStringIndexableObject} from "../../typedefs/IField";
+import {E_CONDITION_EFFECTS, IDefaultUiSettings, IGenericField, IStringIndexableObject} from "../../typedefs/IField";
 import {joinInCustomValidation} from "../../util/validation";
 import FormErrorFallback from "../FormErrorFallback/FormErrorFallback";
 import {usePrevious} from "../../hooks";
 import PersistenceHandler from "./components/PersistenceHandler/PersistenceHandler";
 import {mapField} from "../../util/fieldMapper";
-import {
-    validateFieldConfiguration,
-    validateUiConfiguration
-} from "../../util/ConfigurationParser";
-import {cloneValues, getDefaultValues} from "./util";
+import {validateFieldConfiguration, validateUiConfiguration} from "../../util/ConfigurationParser";
+import {applyConditions, cloneValues, getDefaultValues, getDependentOnFields} from "./util";
 
 
 export interface IFormProps {
@@ -86,6 +80,7 @@ export function Form(props: IFormProps) {
 
     const defaultValues = getDefaultValues(initialValues, fieldConfigs);
 
+
     const formMethods = useForm({
         defaultValues,
         shouldUnregister: true
@@ -99,6 +94,10 @@ export function Form(props: IFormProps) {
         setValue,
         watch
     } = formMethods;
+
+    // trigger a rerender if the value of the dependent fields change
+    const dependentOnFields = getDependentOnFields(fieldConfigs);
+    const valuesOfDependentOnFields = watch(dependentOnFields);
 
     const {dirtyFields, errors} = formState;
 
@@ -251,7 +250,12 @@ export function Form(props: IFormProps) {
                                                     throw new Error(`Invalid configuration.`)
                                                 }
 
-                                                const {customProperties, fieldType, validation} = fieldConfig;
+                                                const {
+                                                    condition,
+                                                    customProperties,
+                                                    fieldType,
+                                                    validation
+                                                } = fieldConfig;
                                                 const fieldUiSettings = uiSettings[field];
 
                                                 const {
@@ -268,22 +272,27 @@ export function Form(props: IFormProps) {
                                                     ...rest
                                                 };
 
+                                                const {effect, isMet} = applyConditions(getValues(), condition);
                                                 const FieldComponent = mapField(fieldType, customMapping);
 
-                                                return (
-                                                    <Grid
-                                                        key={field}
-                                                        item
-                                                        xs={fieldUiSettings.columns ?? 12}>
-                                                        <FieldComponent
-                                                            customProperties={customProperties}
-                                                            loading={loading}
-                                                            fieldId={field}
-                                                            fieldType={fieldType}
-                                                            uiSettings={Object.assign({}, {variant}, fieldUiSettings)}
-                                                            validation={validationRules}
-                                                        />
-                                                    </Grid>
+                                                return ((effect === E_CONDITION_EFFECTS.DISPLAY && isMet) || effect !== E_CONDITION_EFFECTS.DISPLAY ?
+                                                        <Grid
+                                                            key={field}
+                                                            item
+                                                            xs={fieldUiSettings.columns ?? 12}>
+                                                            <FieldComponent
+                                                                customProperties={customProperties}
+                                                                loading={loading}
+                                                                fieldId={field}
+                                                                fieldType={fieldType}
+                                                                uiSettings={Object.assign({}, {
+                                                                    disabled: effect === E_CONDITION_EFFECTS.ENABLE && !isMet,
+                                                                    variant
+                                                                }, fieldUiSettings)}
+                                                                validation={validationRules}
+                                                            />
+                                                        </Grid>
+                                                        : <></>
                                                 );
                                             })}
                                         </Grid>

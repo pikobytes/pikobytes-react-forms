@@ -30,6 +30,7 @@ export default function Select({
                                    },
                                    fieldId,
                                    uiSettings: {
+                                       disabled,
                                        label,
                                        placeholder,
                                        size,
@@ -46,7 +47,7 @@ export default function Select({
     }
 
     const {required} = validation;
-    const {field} = useController({name: fieldId, rules: validation});
+    const {field} = useController({name: fieldId, rules: Object.assign({disabled}, validation)});
     const {onChange, onBlur, ref, value} = field;
 
 
@@ -69,6 +70,7 @@ export default function Select({
 
     return (
         <FormControl
+            disabled={disabled}
             key={fieldId}
             error={isErroneous}
             fullWidth

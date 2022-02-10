@@ -21,15 +21,16 @@ export default function Checkbox(props: IGenericField<IDefaultUiSettings, void>)
     const {
         fieldId,
         uiSettings: {
+            disabled,
             label,
             size
         },
         validation
     } = props;
 
-    const { required } = validation;
+    const {required} = validation;
     const {formState} = useFormContext();
-    const {field} = useController({name: fieldId, rules: validation});
+    const {field} = useController({name: fieldId, rules: Object.assign({disabled}, validation)});
 
     const {errors} = formState;
     const error = errors[fieldId];
@@ -37,6 +38,7 @@ export default function Checkbox(props: IGenericField<IDefaultUiSettings, void>)
 
     return (
         <FormControl
+            disabled={disabled}
             error={isErroneous}
             fullWidth
             required={required !== false}
