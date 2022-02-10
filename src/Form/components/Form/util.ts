@@ -6,17 +6,29 @@
  */
 import {IFieldConfig, IStringIndexableObject} from "../../typedefs/IField";
 import {MANUAL_DIRTY_TRIGGER_ID} from "./Form";
+import FIELD_TYPES from "../../typedefs/FieldTypes";
 
 export const cloneValues = (val: any) =>
     typeof val === 'object' && val !== null ? Object.assign({}, val) : val;
 
 
+export const getDefaultValueForFieldType = (fieldType: FIELD_TYPES) => {
+    switch (fieldType) {
+
+        case FIELD_TYPES.BOOLEAN:
+        case FIELD_TYPES.BOOL:
+            return false;
+        default:
+            return ""
+    }
+}
+
 export const getDefaultValues = (initialValues: IStringIndexableObject<string | undefined> | undefined, fieldConfig: IFieldConfig) => {
     // create empty default values for all fields without default values in the config
     const fieldKeys = Object.keys(fieldConfig);
-    const defaultValues: IStringIndexableObject<string> = {};
+    const defaultValues: IStringIndexableObject<string | boolean> = {};
     fieldKeys.forEach(k => {
-        defaultValues[k] = fieldConfig[k].defaultValue ?? "";
+        defaultValues[k] = fieldConfig[k].defaultValue ?? getDefaultValueForFieldType(fieldConfig[k].fieldType);
     });
 
     const definedInitialValues: IStringIndexableObject<string> = {};

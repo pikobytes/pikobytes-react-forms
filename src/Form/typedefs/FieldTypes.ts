@@ -6,18 +6,19 @@
  */
 
 export enum FIELD_TYPES {
-  AUTOSUGGEST = 'autosuggest',
-  DATE = 'datetime-local',
-  NUMBER = 'number',
-  STRING = 'string',
-  GEOMETRY = 'geometry',
-  TAGS = 'tags',
-  RANGE = 'range',
-  BOOL = 'bool',
-  SELECT = 'select',
-  FILE = 'file',
-  TEXTFIELD = 'textfield',
-  PUBLICATION = 'publication',
+    AUTOSUGGEST = 'autosuggest',
+    DATE = 'datetime-local',
+    NUMBER = 'number',
+    STRING = 'string',
+    GEOMETRY = 'geometry',
+    TAGS = 'tags',
+    RANGE = 'range',
+    BOOL = 'bool',
+    BOOLEAN = "boolean",
+    SELECT = 'select',
+    FILE = 'file',
+    TEXTFIELD = 'textfield',
+    PUBLICATION = 'publication',
 }
 
 export default FIELD_TYPES;

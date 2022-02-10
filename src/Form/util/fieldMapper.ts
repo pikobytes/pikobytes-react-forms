@@ -5,13 +5,13 @@
  * file 'LICENSE.txt', which is part of this source code package.
  */
 import React from 'react';
-import {CheckBox} from "@mui/icons-material";
 import FIELD_TYPES from "../typedefs/FieldTypes";
 import Select from "../components/Inputs/Select/Select";
 import DateTimePicker from "../components/Inputs/DateTimePicker/DateTimePicker";
 import TextField from "../components/Inputs/TextField/TextField";
 import {IDefaultUiSettings, IGenericField} from "../typedefs/IField";
 import TagManagementContainer from "../components/Inputs/TagManagement/TagManagementContainer";
+import Checkbox from "../components/Inputs/Checkbox/Checkbox";
 
 
 export const mapField = (fieldType: string, customMapping?: { [key: string]:
@@ -51,7 +51,8 @@ export const mapCustomFields = (fieldType: string, customMapping: { [key: string
 export const mapDefaultFields = (fieldType: string,) => {
     switch (fieldType) {
         case FIELD_TYPES.BOOL:
-            return (CheckBox);
+        case FIELD_TYPES.BOOLEAN:
+            return (Checkbox);
         case FIELD_TYPES.SELECT:
             return (Select);
         case FIELD_TYPES.TAGS:

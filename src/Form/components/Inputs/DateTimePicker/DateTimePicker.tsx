@@ -12,8 +12,8 @@ import {
     TextField,
 } from '@mui/material';
 import {Event} from '@mui/icons-material';
-import {DateTimePicker as MUIDateTimePicker } from '@mui/lab';
-import { useController, useFormContext} from 'react-hook-form';
+import {DateTimePicker as MUIDateTimePicker} from '@mui/lab';
+import {useController, useFormContext} from 'react-hook-form';
 import formatISO from 'date-fns/formatISO';
 
 import {IDefaultUiSettings, IGenericField} from '../../../typedefs/IField';
@@ -29,7 +29,7 @@ export function DateTimePicker({
                                    },
                                    validation,
                                }: IGenericField<IDefaultUiSettings, undefined>) {
-    const {field} = useController({name: fieldId});
+    const {field} = useController({name: fieldId, rules: validation});
     const {ref, value, onChange, ...rest} = field;
 
     const {formState} = useFormContext();
@@ -39,18 +39,19 @@ export function DateTimePicker({
     const error = errors[fieldId];
     const highlightBackground = required && value === '';
 
-
     return (
         <MUIDateTimePicker
             clearable
             renderInput={(props) => <TextField {...props}
+                                               required={required !== false}
+                                               fullWidth
                                                helperText={error !== undefined ? error.message : description}
                                                placeholder={placeholder}
                                                size={size}
                                                variant={variant}/>}
             ampm={false}
             disableFuture
-            inputFormat={"yyyy/MM/dd, HH:mm"}
+            inputFormat="yyyy/MM/dd, HH:mm"
             mask="____/__/__, __:__"
             InputProps={{
                 endAdornment: (
@@ -70,7 +71,7 @@ export function DateTimePicker({
             label={label}
             value={value === '' ? null : value}
             onChange={(dateTimeObject) => {
-                if (dateTimeObject !== null) {
+                if (dateTimeObject !== null && !isNaN(dateTimeObject.getTime())) {
                     // publish string to form state instead of datetime object
 
                     // @ts-ignore

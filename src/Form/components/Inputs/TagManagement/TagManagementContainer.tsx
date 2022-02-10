@@ -6,62 +6,63 @@
  */
 
 import React from 'react';
-import { useController } from 'react-hook-form';
+import {useController} from 'react-hook-form';
 
 import TagManagement from './TagManagement';
 import {IDefaultUiSettings, ITagManagement} from '../../../typedefs/IField';
-import { ITagObject } from './typedefs';
+import {ITagObject} from './typedefs';
 import {isFieldSet} from "../../../util/fieldAccess";
 
 
 export function TagManagementContainer(props: ITagManagement<IDefaultUiSettings>) {
-  const {
-    customProperties: {
-      isEdit,
-    },
-    fieldId,
+    const {
+        customProperties,
+        fieldId,
+        validation
 
-  } = props;
+    } = props;
 
-  const { field } = useController({name: fieldId});
-  const { value, onChange } = field;
+    const {isEdit} = customProperties ?? {};
 
-  const onTagCreate = (tag: string, tagObject: ITagObject) => {
-    tagObject.tags.push(tag);
-    onChange(JSON.stringify(tagObject));
-  };
+    const {field} = useController({name: fieldId, rules: validation});
+    const {value, onChange} = field;
 
-  const onTagRemove = (tagToDelete: string, tagObject: ITagObject) => {
-    if (isEdit) {
-      tagObject.tagsToDelete.push(tagToDelete);
-    } else {
-      tagObject.tags = tagObject.tags.filter((tag) => tag !== tagToDelete);
-    }
+    const onTagCreate = (tag: string, tagObject: ITagObject) => {
+        tagObject.tags.push(tag);
+        onChange(JSON.stringify(tagObject));
+    };
 
-    onChange(JSON.stringify(tagObject));
-  };
+    const onTagRemove = (tagToDelete: string, tagObject: ITagObject) => {
+        if (isEdit) {
+            tagObject.tagsToDelete.push(tagToDelete);
+        } else {
+            tagObject.tags = tagObject.tags.filter((tag) => tag !== tagToDelete);
+        }
 
-  const onTagRemoveAbort = (tag: string, tagObject: ITagObject) => {
-    const newTagsToDelete = tagObject.tagsToDelete.filter((t) => t !== tag);
-    tagObject.tagsToDelete =
-      newTagsToDelete.length === 0 ? [] : newTagsToDelete;
-    onChange(JSON.stringify(tagObject));
-  };
+        onChange(JSON.stringify(tagObject));
+    };
 
-  const { tags, tagsToDelete } = isFieldSet(value)
-    ? JSON.parse(value)
-    : { tags: [], tagsToDelete: [] };
+    const onTagRemoveAbort = (tag: string, tagObject: ITagObject) => {
+        const newTagsToDelete = tagObject.tagsToDelete.filter((t) => t !== tag);
+        tagObject.tagsToDelete =
+            newTagsToDelete.length === 0 ? [] : newTagsToDelete;
+        onChange(JSON.stringify(tagObject));
+    };
 
-  return (
-    <TagManagement
-      onTagCreate={onTagCreate}
-      onTagRemove={onTagRemove}
-      onTagRemoveReversed={onTagRemoveAbort}
-      tags={tags}
-      tagsToDelete={tagsToDelete}
-      {...props}
-    />
-  );
+    const {tags, tagsToDelete} = isFieldSet(value)
+        ? JSON.parse(value)
+        : {tags: [], tagsToDelete: []};
+
+    return (
+        <TagManagement
+            onTagCreate={onTagCreate}
+            onTagRemove={onTagRemove}
+            onTagRemoveReversed={onTagRemoveAbort}
+            tags={tags}
+            tagsToDelete={tagsToDelete}
+            {...props}
+        />
+    );
 }
 
 export default TagManagementContainer;

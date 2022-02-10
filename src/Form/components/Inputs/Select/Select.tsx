@@ -5,21 +5,23 @@
  * file 'LICENSE.txt', which is part of this source code package.
  */
 
-import React, {useRef} from 'react';
+import React from 'react';
 import {
     alpha,
     FormControl,
     FormHelperText,
     InputLabel,
-    Select as MUISelect,
+    Select as MUISelect, SelectChangeEvent,
 } from '@mui/material';
 
-import {useFormContext, UseFormRegisterReturn} from "react-hook-form";
+import { useController, useFormContext } from "react-hook-form";
 import {
     IDefaultUiSettings,
     IGenericField,
     ISelectCustomProperties
 } from "../../../typedefs/IField";
+
+const EMPTY_VALUE = "none";
 
 export default function Select({
                                    customProperties: {
@@ -44,11 +46,9 @@ export default function Select({
     }
 
     const {required} = validation;
+    const {field} = useController({name: fieldId, rules: validation});
+    const {onChange, onBlur, ref, value} = field;
 
-    const {ref, ...rest} =
-        register !== undefined
-            ? register(fieldId)
-            : (registerReturn as UseFormRegisterReturn);
 
     const {formState} = useFormContext();
 
@@ -56,13 +56,16 @@ export default function Select({
     const error = errors[fieldId];
 
     const isErroneous = error !== undefined;
-    const fieldRef = useRef<HTMLInputElement | null>(null);
 
-    const highlightBackground =
-        required &&
-        fieldRef !== null &&
-        fieldRef.current !== null &&
-        fieldRef!.current.value === '';
+    const highlightBackground = required && value === "";
+
+    const handleChange = (e: SelectChangeEvent) => {
+        if (e.target.value === EMPTY_VALUE) {
+            onChange("");
+        } else {
+            onChange(e.target.value);
+        }
+    }
 
     return (
         <FormControl
@@ -73,24 +76,23 @@ export default function Select({
             size={size}
             variant={variant}
         >
-            <InputLabel htmlFor={label} shrink >
+            <InputLabel htmlFor={label} shrink>
                 {label}
             </InputLabel>
             <MUISelect
-                inputProps={{id: label, ...rest}}
-                inputRef={(e) => {
-                    ref(e);
-                    fieldRef.current = e;
-                }}
+                onBlur={onBlur}
+                onChange={handleChange}
+                inputRef={ref}
                 label={label}
                 native
+                value={value === "" ? EMPTY_VALUE : value}
                 sx={(theme) => ({
                     backgroundColor: highlightBackground
                         ? alpha(theme.palette.error.light, 0.35)
                         : theme.palette.background.default
                 })}
             >
-                <option value="">{placeholder}</option>
+                <option value={EMPTY_VALUE} disabled={value !== EMPTY_VALUE}>{placeholder}</option>
 
                 {options?.map(({label, value, helperText}) => (
                     <option key={label} title={helperText} value={value}>

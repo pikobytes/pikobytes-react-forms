@@ -79,6 +79,7 @@ export interface ITextFieldCustomProperties extends IOutsideRegisterAllowedPrope
 }
 
 export interface ISelectCustomProperties extends IOutsideRegisterAllowedProperties {
+  defaultValue: string;
   options: Array<IOption>
 }
 

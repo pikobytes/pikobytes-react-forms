@@ -7,17 +7,17 @@
 
 import React, {
     useEffect, useMemo,
-    useState,
-} from 'react';
-import {FormProvider, useForm} from 'react-hook-form';
-import {alpha, Grid, Typography} from '@mui/material';
-import {ErrorBoundary} from 'react-error-boundary';
+    useState
+} from "react";
+import {FieldError, FormProvider, useForm} from "react-hook-form";
+import {alpha, Grid, Typography} from "@mui/material";
+import {ErrorBoundary} from "react-error-boundary";
 import AdapterDateFns from "@mui/lab/AdapterDateFns";
 import {LocalizationProvider} from "@mui/lab";
 
-import {IDefaultUiSettings, IGenericField } from '../../typedefs/IField';
-import {joinInCustomValidation} from '../../util/validation';
-import FormErrorFallback from '../FormErrorFallback/FormErrorFallback';
+import {IDefaultUiSettings, IGenericField, IStringIndexableObject} from "../../typedefs/IField";
+import {joinInCustomValidation} from "../../util/validation";
+import FormErrorFallback from "../FormErrorFallback/FormErrorFallback";
 import {usePrevious} from "../../hooks";
 import PersistenceHandler from "./components/PersistenceHandler/PersistenceHandler";
 import {mapField} from "../../util/fieldMapper";
@@ -28,7 +28,7 @@ import {
 import {cloneValues, getDefaultValues} from "./util";
 
 
-interface IFormProps {
+export interface IFormProps {
     activatePersistence?: boolean;
     configuration: Object,
     uiConfiguration: Object,
@@ -39,6 +39,7 @@ interface IFormProps {
         [key: string]: string;
     };
     loadingFields?: Array<string>;
+    onError: (errors: IStringIndexableObject<FieldError>, values: IStringIndexableObject<string>) => void;
     onPublishValues?: (
         fieldValues: Array<string>,
         previousFieldValues: Array<string>,
@@ -48,14 +49,18 @@ interface IFormProps {
     onSubmit: (data: any) => void;
     onUpdateResetForm?: (e: any) => void;
     persistenceKey?: string;
-    variant?: 'filled' | 'outlined' | 'standard';
+    variant?: "filled" | "outlined" | "standard";
 }
 
-export const MANUAL_DIRTY_TRIGGER_ID = "MANUAL_DIRTY_TRIGGER"
+export const MANUAL_DIRTY_TRIGGER_ID = "MANUAL_DIRTY_TRIGGER";
 
+const filterOutInternalFields = (internalValues: IStringIndexableObject<string>) => {
+    const {MANUAL_DIRTY_TRIGGER, ...values} = internalValues;
 
+    return values;
+}
 
-export default function Form(props: IFormProps) {
+export function Form(props: IFormProps) {
     const {
         activatePersistence = false,
         configuration,
@@ -65,12 +70,13 @@ export default function Form(props: IFormProps) {
         formId,
         initialValues,
         loadingFields,
+        onError,
         onPublishValues,
         onSetIsDirty,
         onSubmit,
         onUpdateResetForm,
         persistenceKey,
-        variant,
+        variant
     } = props;
 
     const [blockPublish, setBlockPublish] = useState<boolean>(false);
@@ -82,18 +88,20 @@ export default function Form(props: IFormProps) {
 
     const formMethods = useForm({
         defaultValues,
-        shouldUnregister: true,
+        shouldUnregister: true
     });
 
     const {
         formState,
+        getValues,
         handleSubmit,
         reset,
         setValue,
-        watch,
+        watch
     } = formMethods;
 
-    const {dirtyFields} = formState;
+    const {dirtyFields, errors} = formState;
+
 
     const isDirty = Object.keys(dirtyFields).length > 0;
 
@@ -116,11 +124,17 @@ export default function Form(props: IFormProps) {
 
     const handleDirtyForm = (dirty = true) => {
         if (dirty) {
-            setValue(MANUAL_DIRTY_TRIGGER_ID, 'a', {shouldDirty: true});
+            setValue(MANUAL_DIRTY_TRIGGER_ID, "a", {shouldDirty: true});
         } else {
-            setValue(MANUAL_DIRTY_TRIGGER_ID, '', {shouldDirty: true});
+            setValue(MANUAL_DIRTY_TRIGGER_ID, "", {shouldDirty: true});
         }
     };
+
+    const handleInternalSubmit = (values: IStringIndexableObject<string>) => {
+        const externalValues = filterOutInternalFields(values);
+
+        onSubmit(externalValues);
+    }
 
     const handleReset = () => {
         reset();
@@ -144,7 +158,7 @@ export default function Form(props: IFormProps) {
             setBlockPublish(false);
         } else if (fieldValues !== undefined && previousFieldValues !== undefined && onPublishValues !== undefined) {
             onPublishValues(fieldValues as string[], previousFieldValues, {
-                setValue,
+                setValue
             });
         }
     }, [blockPublish, fieldValues, onPublishValues, previousFieldValues, setValue]);
@@ -178,6 +192,15 @@ export default function Form(props: IFormProps) {
         },
         [initialValues, reset]);
 
+    // publish errors if there are any
+    const errorLength = Object.keys(errors).length;
+
+    useEffect(() => {
+        if (errorLength > 0 && onError !== undefined) {
+            onError(errors, filterOutInternalFields(getValues()));
+        }
+    }, [onError, errors, errorLength, getValues])
+
 
     return (
         <ErrorBoundary FallbackComponent={FormErrorFallback} onReset={handleReset}>
@@ -187,8 +210,8 @@ export default function Form(props: IFormProps) {
                         {activatePersistence && <PersistenceHandler
                             fieldConfigs={fieldConfigs}
                             persistenceKey={persistenceKey ?? formId}
-                            sections={sections}/> }
-                        <form id={formId} onSubmit={handleSubmit(onSubmit)}>
+                            sections={sections}/>}
+                        <form id={formId} onSubmit={handleSubmit(handleInternalSubmit)}>
                             {sections.map(
                                 ({title, fields}, index) => {
                                     return (
@@ -196,7 +219,7 @@ export default function Form(props: IFormProps) {
                                             key={`${title}_${index}`}
                                             container
                                             direction="row"
-                                            alignItems="flex-start"
+                                            alignItems="center"
                                             spacing={2}
                                             sx={{paddingBottom: 4}}
                                         >
@@ -208,10 +231,10 @@ export default function Form(props: IFormProps) {
                                                         sx={theme => ({
                                                             fontWeight: 500,
                                                             fontSize: 20,
-                                                            textTransform: 'uppercase',
-                                                            borderBottom: '1px solid ' + alpha(theme.palette.primary.main, 0.3),
+                                                            textTransform: "uppercase",
+                                                            borderBottom: "1px solid " + alpha(theme.palette.primary.main, 0.3),
                                                             mt: 3,
-                                                            mb: 1,
+                                                            mb: 1
                                                         })}
                                                     >
                                                         {title}
@@ -219,12 +242,22 @@ export default function Form(props: IFormProps) {
                                                 </Grid>
                                             )}
                                             {fields.map((field) => {
-                                                const {customProperties, fieldType, validation} = fieldConfigs[field];
+                                                let fieldConfig;
+
+                                                try {
+                                                    fieldConfig = fieldConfigs[field];
+                                                } catch (e) {
+                                                    console.error(`Error trying to access configuration for field "${field}". Check if it is defined in the configuration.`);
+                                                    throw new Error(`Invalid configuration.`)
+                                                }
+
+                                                const {customProperties, fieldType, validation} = fieldConfig;
+                                                const fieldUiSettings = uiSettings[field];
 
                                                 const {
                                                     customValidationFunctions,
                                                     ...rest
-                                                } = validation;
+                                                } = validation ?? {};
 
 
                                                 const loading = loadingFields !== undefined && loadingFields.includes(field);
@@ -232,20 +265,25 @@ export default function Form(props: IFormProps) {
                                                 const validationRules = {
                                                     ...(customValidationFunctions !== undefined &&
                                                         joinInCustomValidation(customValidationFunctions)),
-                                                    ...rest,
+                                                    ...rest
                                                 };
 
-                                                const FieldComponent = mapField(fieldType, customMapping)
+                                                const FieldComponent = mapField(fieldType, customMapping);
 
                                                 return (
-                                                    <FieldComponent
-                                                        customProperties={customProperties}
-                                                        loading={loading}
-                                                        fieldId={field}
-                                                        fieldType={fieldType}
-                                                        uiSettings={Object.assign({}, {variant}, uiSettings[field])}
-                                                        validation={validationRules}
-                                                    />
+                                                    <Grid
+                                                        key={field}
+                                                        item
+                                                        xs={fieldUiSettings.columns ?? 12}>
+                                                        <FieldComponent
+                                                            customProperties={customProperties}
+                                                            loading={loading}
+                                                            fieldId={field}
+                                                            fieldType={fieldType}
+                                                            uiSettings={Object.assign({}, {variant}, fieldUiSettings)}
+                                                            validation={validationRules}
+                                                        />
+                                                    </Grid>
                                                 );
                                             })}
                                         </Grid>
@@ -259,3 +297,5 @@ export default function Form(props: IFormProps) {
         </ErrorBoundary>
     );
 }
+
+export default Form;

@@ -24,14 +24,12 @@ export default function Checkbox(props: IGenericField<IDefaultUiSettings, void>)
             label,
             size
         },
-        validation: {
-            required
-        }
-
+        validation
     } = props;
 
+    const { required } = validation;
     const {formState} = useFormContext();
-    const {field} = useController({name: fieldId});
+    const {field} = useController({name: fieldId, rules: validation});
 
     const {errors} = formState;
     const error = errors[fieldId];

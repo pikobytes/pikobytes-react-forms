@@ -9,8 +9,8 @@ import React from 'react';
 import Form from "./Form";
 import FIELD_TYPES from "../../typedefs/FieldTypes";
 import {FormProvider, useForm} from 'react-hook-form';
-import { default as exampleConfiguration} from "./exampleConfiguration.json";
-import { default as exampleUiConfiguration} from "./exampleUiConfiguration.json";
+import {default as exampleConfiguration} from "./exampleConfiguration.json";
+import {default as exampleUiConfiguration} from "./exampleUiConfiguration.json";
 
 export default {
     title: "Example/Form",
@@ -29,13 +29,15 @@ export function FormProviderWrapper({
 }
 
 function Template(args: any) {
-    return <Form {...args} />
+    return <><Form {...args} /><button form="test" type="submit">Submit</button></>
 }
 
 
 export const Default = Template.bind({});
 // @ts-ignore
 Default.args = {
+    formId: "test",
+    onError: (e) => {console.log(e)},
     configuration: exampleConfiguration,
     uiConfiguration: exampleUiConfiguration,
 };
@@ -49,6 +51,7 @@ MultipleFields.args = {
     onSetIsDirty: (e: any) => {
         console.log(e)
     },
+    formId: "test",
     sections: [{
         title: "General",
         fields: [{key: "test", type: FIELD_TYPES.TEXTFIELD, validation: {}}, {

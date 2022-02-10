@@ -47,30 +47,29 @@ export default function TextField(
             size,
             variant
         },
-        validation: {
-            required
-        }
+        validation,
     } = props;
 
-    const {register} = useFormContext();
+    const { register } = useFormContext();
 
     const {
         registerReturn,
         rows,
         ...otherCustomProperties
     } = customProperties ?? {};
+    const { required } = validation;
 
     if (register === undefined && registerReturn === undefined) {
         throw new Error('Either register or registerReturn must be supplied');
     }
 
-    const {formState} = useFormContext();
-    const {errors} = formState;
+    const { formState } = useFormContext();
+    const { errors } = formState;
     const error = errors[fieldId];
 
     const {ref, ...rest} =
         register !== undefined
-            ? register(fieldId)
+            ? register(fieldId, validation)
             : (registerReturn as UseFormRegisterReturn);
 
     const isErroneous = error !== undefined;
@@ -93,6 +92,7 @@ export default function TextField(
                     fieldRef.current = e;
                 }}
                 label={label}
+                key={fieldId}
                 multiline={fieldType === FIELD_TYPES.TEXTFIELD}
                 inputProps={{
                     ...otherCustomProperties,
@@ -118,7 +118,6 @@ export default function TextField(
                 name={fieldId}
                 placeholder={placeholder === undefined ? label : placeholder}
                 fullWidth
-                required={required !== false}
                 size={size}
                 InputLabelProps={{shrink: true}}
                 type={getHTMLType(fieldType)}
