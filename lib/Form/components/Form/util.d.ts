@@ -12,7 +12,7 @@ export declare const applyConditions: (fieldValues: IStringIndexableObject<strin
     effect: E_CONDITION_EFFECTS;
     isMet: boolean;
 };
-export declare const getFieldsWithCondition: (fieldConfigs: IStringIndexableObject<IGenericField<any, any>>) => string[];
+export declare const getDependentOnFields: (fieldConfigs: IStringIndexableObject<IGenericField<any, any>>) => string[];
 export declare const getDefaultValueForFieldType: (fieldType: FIELD_TYPES) => false | "";
 export declare const getDefaultValues: (initialValues: IStringIndexableObject<string | undefined> | undefined, fieldConfig: IFieldConfig) => {
     MANUAL_DIRTY_TRIGGER: string;

@@ -12,10 +12,13 @@ import TextField from "../components/Inputs/TextField/TextField";
 import {IDefaultUiSettings, IGenericField} from "../typedefs/IField";
 import TagManagementContainer from "../components/Inputs/TagManagement/TagManagementContainer";
 import Checkbox from "../components/Inputs/Checkbox/Checkbox";
+import DatePicker from "../components/Inputs/DatePicker/DatePicker";
 
 
-export const mapField = (fieldType: string, customMapping?: { [key: string]:
-        React.ComponentType<IGenericField<IDefaultUiSettings, any>> }):
+export const mapField = (fieldType: string, customMapping?: {
+    [key: string]:
+        React.ComponentType<IGenericField<IDefaultUiSettings, any>>
+}):
     React.ComponentType<IGenericField<IDefaultUiSettings, any>> => {
     let component;
 
@@ -58,6 +61,8 @@ export const mapDefaultFields = (fieldType: string,) => {
         case FIELD_TYPES.TAGS:
             return (TagManagementContainer);
         case FIELD_TYPES.DATE:
+            return (DatePicker);
+        case FIELD_TYPES.DATETIME:
             return (DateTimePicker);
         case FIELD_TYPES.STRING:
         case FIELD_TYPES.NUMBER:

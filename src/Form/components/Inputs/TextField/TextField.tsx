@@ -78,6 +78,7 @@ export default function TextField(
 
     const highlightBackground =
         required &&
+        !disabled &&
         fieldRef !== null &&
         fieldRef.current !== null &&
         fieldRef!.current.value === ''

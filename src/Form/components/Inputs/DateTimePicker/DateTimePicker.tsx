@@ -38,7 +38,7 @@ export function DateTimePicker({
     const {required} = validation;
     const {errors} = formState;
     const error = errors[fieldId];
-    const highlightBackground = required && value === '';
+    const highlightBackground = required && value === '' && !disabled;
 
     return (
         <MUIDateTimePicker

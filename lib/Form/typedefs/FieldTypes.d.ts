@@ -6,7 +6,8 @@
  */
 export declare enum FIELD_TYPES {
     AUTOSUGGEST = "autosuggest",
-    DATE = "datetime-local",
+    DATETIME = "datetime",
+    DATE = "date",
     NUMBER = "number",
     STRING = "string",
     GEOMETRY = "geometry",

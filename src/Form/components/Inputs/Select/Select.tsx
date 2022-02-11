@@ -58,7 +58,7 @@ export default function Select({
 
     const isErroneous = error !== undefined;
 
-    const highlightBackground = required && value === "";
+    const highlightBackground = required && value === "" && !disabled;
 
     const handleChange = (e: SelectChangeEvent) => {
         if (e.target.value === EMPTY_VALUE) {

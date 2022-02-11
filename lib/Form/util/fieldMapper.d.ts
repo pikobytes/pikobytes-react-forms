@@ -6,10 +6,10 @@
  */
 import React from 'react';
 import Select from "../components/Inputs/Select/Select";
-import DateTimePicker from "../components/Inputs/DateTimePicker/DateTimePicker";
 import TextField from "../components/Inputs/TextField/TextField";
 import { IDefaultUiSettings, IGenericField } from "../typedefs/IField";
 import TagManagementContainer from "../components/Inputs/TagManagement/TagManagementContainer";
+import DatePicker from "../components/Inputs/DatePicker/DatePicker";
 export declare const mapField: (fieldType: string, customMapping?: {
     [key: string]: React.ComponentType<IGenericField<IDefaultUiSettings, any>>;
 } | undefined) => React.ComponentType<IGenericField<IDefaultUiSettings, any>>;
@@ -23,4 +23,4 @@ export declare const mapCustomFields: (fieldType: string, customMapping: {
  * Maps a field type to a corresponding field component
  * @param fieldType
  */
-export declare const mapDefaultFields: (fieldType: string) => typeof Select | typeof TagManagementContainer | typeof DateTimePicker | typeof TextField | undefined;
+export declare const mapDefaultFields: (fieldType: string) => typeof Select | typeof TagManagementContainer | typeof DatePicker | typeof TextField | undefined;

@@ -132,11 +132,11 @@
                     "properties": {
                       "value": {
                         "type": "array",
-                        "items": false,
-                        "prefixItems": [
-                          {"type": "number"},
-                          {"type": "number"}
-                        ]
+                        "items": {
+                          "type": "number"
+                        },
+                        "minItems": 2,
+                        "maxItems": 2
                       }
                     }
                   }
