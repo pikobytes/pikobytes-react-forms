@@ -107,6 +107,8 @@ export interface ISpecialEditBehaviorProperties {
 }
 export interface ITagManagementUiSettings extends IDefaultUiSettings {
     addButtonTooltip?: string;
+    component?: "input" | "autosuggest";
+    options?: Array<IOption | string>;
 }
 export interface ITagManagement<T> extends IGenericField<T, ISpecialEditBehaviorProperties> {
 }

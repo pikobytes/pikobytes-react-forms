@@ -6,11 +6,11 @@
  */
 
 import React, {useRef} from 'react';
-import {Grid, IconButton, TextField, Tooltip} from '@mui/material';
+import {Autocomplete, Grid, IconButton, TextField, Tooltip} from '@mui/material';
 import {Add as AddIcon} from '@mui/icons-material';
 
 import Tag from './Tag';
-import {ITagManagement, ITagManagementUiSettings} from '../../../typedefs/IField';
+import {IOption, ITagManagement, ITagManagementUiSettings} from '../../../typedefs/IField';
 import {ITagObject} from './typedefs';
 
 interface ITagManagementProps {
@@ -29,8 +29,10 @@ export const TagManagement = (props: ITagManagement<ITagManagementUiSettings> & 
     const {
         uiSettings: {
             addButtonTooltip = "Add Tag",
+            component = "input",
             disabled,
             label,
+            options,
             placeholder,
             variant
         },
@@ -118,34 +120,71 @@ export const TagManagement = (props: ITagManagement<ITagManagementUiSettings> & 
         }
     };
 
+    const handleAutocompleteSelect = (event: React.SyntheticEvent<any>, value: IOption | string | null) => {
+        if (value !== null) {
+            const tag = typeof value === "string" ? value : value.value as string;
+
+            if (onTagCreate !== undefined && !tags.includes(tag)) {
+                onTagCreate(tag, {tags, tagsToDelete});
+            }
+        }
+    }
+
+    const InputComponent = (props: any) => {
+        const {inputProps, InputLabelProps, ...rest} = props;
+
+        const {ref, ...inputPropsRest} = inputProps ?? {};
+
+        return <TextField
+            disabled={disabled}
+            fullWidth
+            inputProps={Object.assign({}, inputPropsRest, {
+                className: 'input',
+                type: 'text',
+                autoComplete: 'on',
+                onKeyPress: onKeyPress,
+            }, {
+                ref: (e: any) => {
+                    inputRef.current = e;
+                    if (ref !== undefined) {
+                        ref.current = e;
+                    }
+                }
+            })}
+            InputLabelProps={Object.assign({}, InputLabelProps, {shrink: true, required: required !== false})}
+            label={label}
+            placeholder={placeholder}
+            variant={variant}
+            {...rest}
+        />
+    }
+
+
+    const isAutosuggestWithoutOptions = component === "autosuggest" && (options === undefined || options.length === 0);
+    if (isAutosuggestWithoutOptions) {
+        console.error("No Options for TagManagement autosuggest supplied. Falling back to input.")
+    }
+
     return (
         <Grid container spacing={2}>
             <Grid item xs={12}>
                 <Grid alignItems="center" container spacing={1}>
                     <Grid item xs>
-                        <TextField
-                            disabled={disabled}
-                            fullWidth
-                            inputProps={{
-                                className: 'input',
-                                type: 'text',
-                                autoComplete: 'on',
-                                ref: inputRef,
-                                onKeyPress: onKeyPress,
-                            }}
-                            InputLabelProps={{shrink: true, required: required !== false}}
-                            label={label}
-                            placeholder={placeholder}
-                            variant={variant}
-                        />
+                        {component === "input" || isAutosuggestWithoutOptions
+                            ? <InputComponent/>
+                            : <Autocomplete
+                                clearOnBlur={true}
+                                renderInput={InputComponent}
+                                onChange={handleAutocompleteSelect}
+                                options={options !== undefined ? options : []}/>}
                     </Grid>
-                    <Grid item xs="auto">
+                    {component === "input" && <Grid item xs="auto">
                         <Tooltip title={addButtonTooltip}>
                             <IconButton className="button" onClick={onClickAdd}>
                                 <AddIcon/>
                             </IconButton>
                         </Tooltip>
-                    </Grid>
+                    </Grid>}
                 </Grid>
             </Grid>
 
