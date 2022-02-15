@@ -1,0 +1,248 @@
+{
+    "type": "object",
+    "patternProperties": {
+        "^(?!validation|fieldType|defaultValue|condition$).*$": {
+            "type": "object",
+            "if": {
+                "properties": {
+                    "fieldType": {
+                        "const": "select"
+                    }
+                }
+            },
+            "then": {
+                "required": [
+                    "options"
+                ],
+                "properties": {
+                    "customProperties": {
+                        "type": "object"
+                    },
+                    "options": {
+                        "type": "array",
+                        "minItems": 1,
+                        "items": {
+                            "type": "object",
+                            "required": [
+                                "label",
+                                "value"
+                            ],
+                            "properties": {
+                                "description": {
+                                    "type": "string"
+                                },
+                                "helperText": {
+                                    "type": "string"
+                                },
+                                "label": {
+                                    "type": "string"
+                                },
+                                "value": {
+                                    "anyOf": [
+                                        {
+                                            "type": "number"
+                                        },
+                                        {
+                                            "type": "string"
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "else": {
+                "properties": {
+                    "customProperties": {
+                        "type": "object"
+                    }
+                }
+            },
+            "properties": {
+                "defaultValue": {
+                    "type": "string"
+                },
+                "fieldType": {
+                    "type": "string"
+                },
+                "validation": {
+                    "type": "object",
+                    "properties": {
+                        "required": {
+                            "type": "boolean"
+                        },
+                        "min": {
+                            "type": "number"
+                        },
+                        "max": {
+                            "type": "number"
+                        },
+                        "minLength": {
+                            "type": "number"
+                        },
+                        "maxLength": {
+                            "type": "number"
+                        },
+                        "pattern": {
+                            "type": "string"
+                        },
+                        "validationFunctions": {
+                            "type": "array",
+                            "items": "string"
+                        }
+                    },
+                    "additionalProperties": false
+                },
+                "condition": {
+                    "type": "object",
+                    "properties": {
+                        "effect": {
+                            "enum": [
+                                "display",
+                                "enable"
+                            ]
+                        }
+                    },
+                    "patternProperties": {
+                        "^(?!effect$).*$": {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "required": [
+                                "type",
+                                "value"
+                            ],
+                            "properties": {
+                                "type": {
+                                    "enum": [
+                                        "range",
+                                        "pattern",
+                                        "value",
+                                        "values"
+                                    ]
+                                },
+                                "value": {}
+                            },
+                            "allOf": [
+                                {
+                                    "if": {
+                                        "properties": {
+                                            "type": {
+                                                "const": "range"
+                                            }
+                                        }
+                                    },
+                                    "then": {
+                                        "properties": {
+                                            "value": {
+                                                "type": "array",
+                                                "items": {
+                                                    "type": "number"
+                                                },
+                                                "minItems": 2,
+                                                "maxItems": 2
+                                            }
+                                        }
+                                    }
+                                },
+                                {
+                                    "if": {
+                                        "properties": {
+                                            "type": {
+                                                "const": "value"
+                                            }
+                                        }
+                                    },
+                                    "then": {
+                                        "properties": {
+                                            "value": {
+                                                "oneOf": [
+                                                    {
+                                                        "type": "string"
+                                                    },
+                                                    {
+                                                        "type": "number"
+                                                    },
+                                                    {
+                                                        "type": "boolean"
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    }
+                                },
+                                {
+                                    "if": {
+                                        "properties": {
+                                            "type": {
+                                                "const": "values"
+                                            }
+                                        }
+                                    },
+                                    "then": {
+                                        "properties": {
+                                            "value": {
+                                                "type": "array",
+                                                "items": {
+                                                    "oneOf": [
+                                                        {
+                                                            "type": "string"
+                                                        },
+                                                        {
+                                                            "type": "number"
+                                                        },
+                                                        {
+                                                            "type": "boolean"
+                                                        }
+                                                    ]
+                                                }
+                                            }
+                                        }
+                                    }
+                                },
+                                {
+                                    "if": {
+                                        "properties": {
+                                            "type": {
+                                                "const": "pattern"
+                                            }
+                                        }
+                                    },
+                                    "then": {
+                                        "properties": {
+                                            "value": {
+                                                "type": "string"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        },
+                        "value": {
+                            "oneOf": [
+                                {
+                                    "type": "array",
+                                    "items": {
+                                        "oneOf": [
+                                            {
+                                                "type": "number"
+                                            },
+                                            {
+                                                "type": "string"
+                                            }
+                                        ]
+                                    }
+                                },
+                                {}
+                            ]
+                        }
+                    }
+                }
+            },
+            "required": [
+                "fieldType"
+            ]
+        }
+    },
+    "additionalProperties": false
+}
