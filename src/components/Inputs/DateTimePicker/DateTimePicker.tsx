@@ -5,7 +5,7 @@
  * file 'LICENSE.txt', which is part of this source code package.
  */
 import React from 'react';
-import { alpha, IconButton, InputAdornment, TextField } from '@mui/material';
+import { IconButton, InputAdornment, TextField } from '@mui/material';
 import { Event } from '@mui/icons-material';
 import { DateTimePicker as MUIDateTimePicker } from '@mui/lab';
 import { useController, useFormContext } from 'react-hook-form';
@@ -14,6 +14,11 @@ import {
   IDefaultUiSettings,
   IGenericField,
 } from '../../../typedefs/FieldConfiguration';
+import {
+  getHighlightBackgroundColor,
+  shouldHighlightBackground,
+  shouldShowRequiredLabel,
+} from '../util';
 
 export function DateTimePicker({
   fieldId,
@@ -31,8 +36,16 @@ export function DateTimePicker({
 
   // derived state
   const error = errors[fieldId];
-  const highlightBackground = required && value === '' && !disabled;
-  const showRequiredInLabel = required !== false && !disabled;
+
+  const isErroneous = error !== undefined;
+  const isRequired = required !== false;
+
+  const highlightBackground = shouldHighlightBackground(
+    value,
+    isRequired,
+    disabled
+  );
+  const showRequiredLabel = shouldShowRequiredLabel(isRequired, disabled);
 
   const handleChange = (dateTimeObject: any) => {
     if (dateTimeObject !== null && !isNaN(dateTimeObject.getTime())) {
@@ -47,9 +60,9 @@ export function DateTimePicker({
       renderInput={(props) => (
         <TextField
           {...props}
-          InputLabelProps={{ required: showRequiredInLabel, shrink: true }}
+          InputLabelProps={{ required: showRequiredLabel, shrink: true }}
           fullWidth
-          helperText={error !== undefined ? error.message : description}
+          helperText={isErroneous ? error.message : description}
           placeholder={placeholder}
           size={size}
           variant={variant}
@@ -68,9 +81,10 @@ export function DateTimePicker({
           </InputAdornment>
         ),
         sx: (theme) => ({
-          backgroundColor: highlightBackground
-            ? alpha(theme.palette.error.light, 0.35)
-            : theme.palette.background.default,
+          backgroundColor: getHighlightBackgroundColor(
+            theme,
+            highlightBackground
+          ),
         }),
       }}
       inputRef={ref}

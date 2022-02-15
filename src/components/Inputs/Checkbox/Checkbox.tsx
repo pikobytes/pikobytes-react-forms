@@ -18,6 +18,7 @@ import {
   IDefaultUiSettings,
   IGenericField,
 } from '../../../typedefs/FieldConfiguration';
+import { getHighlightBackgroundColor } from '../util';
 
 export default function Checkbox(
   props: IGenericField<IDefaultUiSettings, void>
@@ -38,13 +39,15 @@ export default function Checkbox(
   const { errors } = formState;
   const error = errors[fieldId];
   const isErroneous = error !== undefined;
+  const isRequired = required !== false;
+  const highlightBackground = field.value !== true && isRequired;
 
   return (
     <FormControl
       disabled={disabled}
       error={isErroneous}
       fullWidth
-      required={required !== false}
+      required={isRequired}
       size={size}
     >
       <FormGroup>
@@ -59,6 +62,12 @@ export default function Checkbox(
             />
           }
           label={label ?? ''}
+          sx={(theme) => ({
+            backgroundColor: getHighlightBackgroundColor(
+              theme,
+              highlightBackground
+            ),
+          })}
         />
       </FormGroup>
       {isErroneous && <FormHelperText>{error!.message}</FormHelperText>}

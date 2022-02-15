@@ -22,6 +22,11 @@ import {
   ITagManagement,
   ITagManagementUiSettings,
 } from '../../../typedefs/FieldConfiguration';
+import {
+  getHighlightBackgroundColor,
+  shouldHighlightBackground,
+  shouldShowRequiredLabel,
+} from '../util';
 
 interface ITagManagementProps {
   onTagCreate: (tag: string, tagObject: ITagObject) => void;
@@ -147,6 +152,15 @@ export const TagManagement = (
 
     const { ref, ...inputPropsRest } = inputProps ?? {};
 
+    const isRequired = required !== false;
+    const showRequiredLabel = shouldShowRequiredLabel(isRequired, disabled);
+
+    const highlightBackground = shouldHighlightBackground(
+      tags.join(''),
+      isRequired,
+      disabled
+    );
+
     return (
       <TextField
         disabled={disabled}
@@ -171,11 +185,17 @@ export const TagManagement = (
         )}
         InputLabelProps={Object.assign({}, InputLabelProps, {
           shrink: true,
-          required: required !== false,
+          required: showRequiredLabel,
         })}
         label={label}
         placeholder={placeholder}
         variant={variant}
+        sx={(theme) => ({
+          backgroundColor: getHighlightBackgroundColor(
+            theme,
+            highlightBackground
+          ),
+        })}
         {...rest}
       />
     );

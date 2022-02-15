@@ -18,6 +18,8 @@ export type TCustomMapping = TStringIndexableObject<
   React.ComponentType<IGenericField<IDefaultUiSettings, any>>
 >;
 
+export type TFieldValue = string | number | boolean;
+
 export type TSize = 'small' | 'medium';
 
 export type TStringIndexableObject<T> = { [k: string]: T };

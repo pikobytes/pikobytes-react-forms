@@ -7,7 +7,7 @@
 import { MANUAL_DIRTY_TRIGGER_ID } from './Form';
 import FIELD_TYPES from '../../typedefs/FieldTypes';
 import { IFieldConfig, IGenericField } from '../../typedefs/FieldConfiguration';
-import { TStringIndexableObject } from '../../typedefs/typedefs';
+import { TFieldValue, TStringIndexableObject } from '../../typedefs/typedefs';
 import {
   E_CONDITION_EFFECTS,
   E_FIELD_CONDITION_TYPES,
@@ -23,7 +23,7 @@ export const cloneValues = (val: any) =>
 
 const matchValueCondition = (
   condition: IValueCondition,
-  fieldValue: string | number
+  fieldValue: TFieldValue
 ) => {
   const { value } = condition;
   return value === fieldValue;
@@ -31,7 +31,7 @@ const matchValueCondition = (
 
 const matchValuesCondition = (
   condition: IValuesCondition,
-  fieldValue: string | number
+  fieldValue: TFieldValue
 ) => {
   const { value } = condition;
   return value.includes(fieldValue);
@@ -39,7 +39,7 @@ const matchValuesCondition = (
 
 const matchPatternCondition = (
   condition: IPatternCondition,
-  fieldValue: string | number
+  fieldValue: TFieldValue
 ) => {
   const { value } = condition;
 
@@ -58,7 +58,7 @@ const matchRangeCondition = (
 
 export const matchFieldCondition = (
   condition: IFieldCondition,
-  fieldValue: string | number
+  fieldValue: TFieldValue
 ) => {
   switch (condition.type) {
     case E_FIELD_CONDITION_TYPES.VALUE:

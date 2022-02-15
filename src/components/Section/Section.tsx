@@ -101,6 +101,15 @@ export const Section = ({
         const { effect, isMet } = applyConditions(getValues(), condition);
         const FieldComponent = mapField(fieldType, customMapping);
 
+        const uiSettingsWithConditionsApplied = Object.assign(
+          {},
+          {
+            disabled: effect === E_CONDITION_EFFECTS.ENABLE && !isMet,
+            variant,
+          },
+          fieldUiSettings
+        );
+
         return (effect === E_CONDITION_EFFECTS.DISPLAY && isMet) ||
           effect !== E_CONDITION_EFFECTS.DISPLAY ? (
           <Grid key={field} item xs={fieldUiSettings.columns ?? 12}>
@@ -109,14 +118,7 @@ export const Section = ({
               loading={loading}
               fieldId={field}
               fieldType={fieldType}
-              uiSettings={Object.assign(
-                {},
-                {
-                  disabled: effect === E_CONDITION_EFFECTS.ENABLE && !isMet,
-                  variant,
-                },
-                fieldUiSettings
-              )}
+              uiSettings={uiSettingsWithConditionsApplied}
               validation={validationRules}
             />
           </Grid>

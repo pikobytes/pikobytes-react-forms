@@ -7,7 +7,6 @@
 
 import React, { useRef } from 'react';
 import {
-  alpha,
   CircularProgress,
   InputAdornment,
   TextField as MUITextField,
@@ -19,6 +18,11 @@ import {
   IDefaultUiSettings,
   ITextField,
 } from '../../../typedefs/FieldConfiguration';
+import {
+  getHighlightBackgroundColor,
+  shouldHighlightBackground,
+  shouldShowRequiredLabel,
+} from '../util';
 
 function getHTMLType(fieldType: FIELD_TYPES): string {
   switch (fieldType) {
@@ -50,9 +54,12 @@ export default function TextField(
 
   const { register } = useFormContext();
 
+  // ref
+  const fieldRef = useRef<HTMLInputElement | null>(null);
+
   const { registerReturn, rows, ...otherCustomProperties } =
     customProperties ?? {};
-  const { required } = validation;
+  const { required } = validation ?? {};
 
   if (register === undefined && registerReturn === undefined) {
     throw new Error('Either register or registerReturn must be supplied');
@@ -71,14 +78,14 @@ export default function TextField(
       : (registerReturn as UseFormRegisterReturn);
 
   const isErroneous = error !== undefined;
-  const fieldRef = useRef<HTMLInputElement | null>(null);
+  const isRequired = required !== false;
 
   const highlightBackground =
-    required &&
-    !disabled &&
     fieldRef !== null &&
     fieldRef.current !== null &&
-    fieldRef!.current.value === '';
+    shouldHighlightBackground(fieldRef.current.value, isRequired, disabled);
+
+  const showRequiredLabel = shouldShowRequiredLabel(isRequired, disabled);
 
   return (
     <React.Fragment>
@@ -118,13 +125,14 @@ export default function TextField(
         placeholder={placeholder === undefined ? label : placeholder}
         fullWidth
         size={size}
-        InputLabelProps={{ required: required !== false, shrink: true }}
+        InputLabelProps={{ required: showRequiredLabel, shrink: true }}
         type={getHTMLType(fieldType)}
         variant={variant}
         sx={(theme) => ({
-          backgroundColor: highlightBackground
-            ? alpha(theme.palette.error.light, 0.35)
-            : theme.palette.background.default,
+          backgroundColor: getHighlightBackgroundColor(
+            theme,
+            highlightBackground
+          ),
         })}
       />
     </React.Fragment>

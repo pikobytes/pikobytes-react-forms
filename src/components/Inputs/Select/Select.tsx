@@ -7,7 +7,6 @@
 
 import React from 'react';
 import {
-  alpha,
   FormControl,
   FormHelperText,
   InputLabel,
@@ -21,6 +20,11 @@ import {
   IGenericField,
   ISelectCustomProperties,
 } from '../../../typedefs/FieldConfiguration';
+import {
+  getHighlightBackgroundColor,
+  shouldHighlightBackground,
+  shouldShowRequiredLabel,
+} from '../util';
 
 const EMPTY_VALUE = 'none';
 
@@ -49,7 +53,14 @@ export default function Select({
   const error = errors[fieldId];
 
   const isErroneous = error !== undefined;
-  const highlightBackground = required && value === '' && !disabled;
+  const isRequired = required !== false;
+  const showRequiredLabel = shouldShowRequiredLabel(isRequired, disabled);
+
+  const highlightBackground = shouldHighlightBackground(
+    value,
+    isRequired,
+    disabled
+  );
 
   const handleChange = (e: SelectChangeEvent) => {
     if (e.target.value === EMPTY_VALUE) {
@@ -65,11 +76,10 @@ export default function Select({
       key={fieldId}
       error={isErroneous}
       fullWidth
-      required={required !== false}
       size={size}
       variant={variant}
     >
-      <InputLabel htmlFor={label} shrink>
+      <InputLabel htmlFor={label} required={showRequiredLabel} shrink>
         {label}
       </InputLabel>
       <MUISelect
@@ -80,9 +90,10 @@ export default function Select({
         native
         value={value === '' ? EMPTY_VALUE : value}
         sx={(theme) => ({
-          backgroundColor: highlightBackground
-            ? alpha(theme.palette.error.light, 0.35)
-            : theme.palette.background.default,
+          backgroundColor: getHighlightBackgroundColor(
+            theme,
+            highlightBackground
+          ),
         })}
       >
         <option value={EMPTY_VALUE} disabled={value !== EMPTY_VALUE}>
