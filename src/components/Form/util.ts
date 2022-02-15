@@ -110,7 +110,20 @@ export const getDependentOnFields = (
     }
   });
 
-  return Array.from(fieldsWithCondition) as Array<string>;
+  const allFields = Object.keys(fieldConfigs);
+  const dependentOnFields = Array.from(fieldsWithCondition) as Array<string>;
+
+  // instead of just checking if there exists a field which cannot be found
+  // within the configuration, also print out which field could not be found
+  dependentOnFields.forEach((dependentOnField) => {
+    if (!allFields.includes(dependentOnField)) {
+      throw new Error(
+        `A condition depends on the field ${dependentOnField} which cannot be found in the supplied configuration.`
+      );
+    }
+  });
+
+  return dependentOnFields;
 };
 
 export const getDefaultValueForFieldType = (fieldType: FIELD_TYPES) => {
