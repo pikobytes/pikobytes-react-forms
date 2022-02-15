@@ -1,5 +1,5 @@
 {
-  "name": "piko-forms",
+  "name": "pikobytes-react-forms",
   "version": "0.1.0",
   "private": true,
   "main": "./lib/index.js",
