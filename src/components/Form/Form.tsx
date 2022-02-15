@@ -4,7 +4,6 @@
  * This file is subject to the terms and conditions defined in
  * file 'LICENSE.txt', which is part of this source code package.
  */
-
 import React, { useEffect, useMemo, useState } from 'react';
 import { FieldError, FormProvider, useForm } from 'react-hook-form';
 import { ErrorBoundary } from 'react-error-boundary';
@@ -18,18 +17,22 @@ import {
   validateFieldConfiguration,
   validateUiConfiguration,
 } from '../../util/ConfigurationParser';
-import { cloneValues, getDefaultValues, getDependentOnFields } from './util';
+import {
+  cloneValues,
+  getDefaultValues,
+  getDependentOnFields,
+} from './util/util';
 import { Section } from '../Section/Section';
 import {
   TStringIndexableObject,
   TCustomMapping,
   TVariant,
+  TValidationFunctionLookup,
 } from '../../typedefs/typedefs';
 
 export interface IFormProps {
   activatePersistence?: boolean;
   configuration: Object;
-  uiConfiguration: Object;
   customMapping?: TCustomMapping;
   fieldsToWatch?: Array<string>;
   formId: string;
@@ -50,7 +53,9 @@ export interface IFormProps {
   onSubmit: (data: any) => void;
   onUpdateResetForm?: (e: any) => void;
   persistenceKey?: string;
+  uiConfiguration: Object;
   variant?: TVariant;
+  validationFunctions?: TValidationFunctionLookup;
 }
 
 export const MANUAL_DIRTY_TRIGGER_ID = 'MANUAL_DIRTY_TRIGGER';
@@ -80,6 +85,7 @@ export function Form(props: IFormProps) {
     onUpdateResetForm,
     persistenceKey,
     variant,
+    validationFunctions,
   } = props;
 
   const [blockPublish, setBlockPublish] = useState<boolean>(false);
@@ -237,6 +243,7 @@ export function Form(props: IFormProps) {
                   title={title}
                   uiSettings={uiSettings}
                   variant={variant}
+                  validationFunctionLookup={validationFunctions}
                 />
               ))}
             </form>

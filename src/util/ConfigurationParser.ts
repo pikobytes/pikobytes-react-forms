@@ -11,7 +11,7 @@ import { default as uiConfigurationSchema } from '../schema/uiConfigurationSchem
 import FIELD_TYPES from '../typedefs/FieldTypes';
 import {
   IDefaultUiSettings,
-  IGenericField,
+  IParsedGenericField,
 } from '../typedefs/FieldConfiguration';
 import { ISection, TStringIndexableObject } from '../typedefs/typedefs';
 
@@ -33,13 +33,14 @@ const parseField = (
 };
 
 const parseSpecialConfigurationFields = (validConfiguration: any) => {
-  const parsedConfiguration: TStringIndexableObject<IGenericField<any, any>> =
-    {};
+  const parsedConfiguration: TStringIndexableObject<
+    IParsedGenericField<any, any>
+  > = {};
 
   Object.keys(validConfiguration).forEach((field) => {
     parsedConfiguration[field] = parseField(
       validConfiguration[field]
-    ) as IGenericField<any, any>;
+    ) as IParsedGenericField<any, any>;
   });
 
   return parsedConfiguration;
@@ -72,6 +73,6 @@ export const validateFieldConfiguration = (configuration: any) => {
   );
 
   return parseSpecialConfigurationFields(validConfiguration) as {
-    [key: string]: IGenericField<any, any>;
+    [key: string]: IParsedGenericField<any, any>;
   };
 };

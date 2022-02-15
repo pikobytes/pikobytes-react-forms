@@ -6,13 +6,19 @@
  */
 import FIELD_TYPES from './FieldTypes';
 import { EFormats } from './configuration';
-import { TSize, TStringIndexableObject, TVariant } from './typedefs';
+import {
+  TSize,
+  TStringIndexableObject,
+  TValidationFunctionLookup,
+  TVariant,
+} from './typedefs';
 import { UseFormRegisterReturn } from 'react-hook-form';
 import { ERROR_MESSAGE_KEY } from './ErrorMessages';
-import { E_VALIDATION_FUNCTION_REGISTRY } from '../configuration/ValidationFunctionConfiguration';
 import { IFieldCondition } from './ConditionalFields';
 
-export type IFieldConfig = TStringIndexableObject<IGenericField<any, any>>;
+export type IFieldConfig = TStringIndexableObject<
+  IParsedGenericField<any, any>
+>;
 
 //
 // Generic configuration parameter every field should use
@@ -25,9 +31,13 @@ export interface IValidation {
   max?: { value: number; message: ERROR_MESSAGE_KEY };
   min?: { value: number; message: ERROR_MESSAGE_KEY };
   pattern?: { value: RegExp; message: ERROR_MESSAGE_KEY };
-  customValidationFunctions?: {
-    [name: string]: E_VALIDATION_FUNCTION_REGISTRY;
-  };
+  validate?: TValidationFunctionLookup;
+}
+
+// when parsed from the configuration file there are no functions, but just strings available
+// these have to be resolved afterwards to be a full IValidation
+interface IParsedValidation extends Omit<IValidation, 'validate'> {
+  validationFunctions?: Array<string>;
 }
 
 export interface IGenericField<UiSettings, CustomProperties> {
@@ -39,6 +49,11 @@ export interface IGenericField<UiSettings, CustomProperties> {
   loading?: boolean;
   uiSettings: UiSettings;
   validation: IValidation;
+}
+
+export interface IParsedGenericField<T, U>
+  extends Omit<IGenericField<T, U>, 'validation'> {
+  validation: IParsedValidation;
 }
 
 export interface IDefaultUiSettings {

@@ -8,19 +8,20 @@ import React from 'react';
 import { alpha, Grid, Typography } from '@mui/material';
 import { useFormContext } from 'react-hook-form';
 
-import { joinInCustomValidation } from '../../util/validation';
-import { applyConditions } from '../Form/util';
 import { mapField } from '../../util/fieldMapper';
 import {
   TStringIndexableObject,
   TCustomMapping,
   TVariant,
+  TValidationFunctionLookup,
 } from '../../typedefs/typedefs';
 import {
   IDefaultUiSettings,
   IFieldConfig,
 } from '../../typedefs/FieldConfiguration';
 import { E_CONDITION_EFFECTS } from '../../typedefs/ConditionalFields';
+import { applyConditions } from '../Form/util/conditionMatching';
+import { resolveValidationFunctions } from '../Form/util/util';
 
 interface ISectionProps {
   customMapping?: TCustomMapping;
@@ -30,6 +31,7 @@ interface ISectionProps {
   title?: string;
   uiSettings: TStringIndexableObject<IDefaultUiSettings>;
   variant?: TVariant;
+  validationFunctionLookup?: TValidationFunctionLookup;
 }
 
 export const Section = ({
@@ -40,6 +42,7 @@ export const Section = ({
   title,
   uiSettings,
   variant,
+  validationFunctionLookup,
 }: ISectionProps) => {
   const { getValues } = useFormContext();
 
@@ -80,23 +83,15 @@ export const Section = ({
           console.error(
             `Error trying to access configuration for field "${field}". Check if it is defined in the configuration.`
           );
-          throw new Error(`Invalid configuration.`);
+          throw new Error('Invalid configuration.');
         }
 
         const { condition, customProperties, fieldType, validation } =
           fieldConfig;
         const fieldUiSettings = uiSettings[field];
 
-        const { customValidationFunctions, ...rest } = validation ?? {};
-
         const loading =
           loadingFields !== undefined && loadingFields.includes(field);
-
-        const validationRules = {
-          ...(customValidationFunctions !== undefined &&
-            joinInCustomValidation(customValidationFunctions)),
-          ...rest,
-        };
 
         const { effect, isMet } = applyConditions(getValues(), condition);
         const FieldComponent = mapField(fieldType, customMapping);
@@ -110,14 +105,23 @@ export const Section = ({
           fieldUiSettings
         );
 
+        const { validationFunctions, ...rest } = validation ?? {};
+        const validationRules = Object.assign(
+          rest,
+          resolveValidationFunctions(
+            validationFunctionLookup,
+            validationFunctions
+          )
+        );
+
         return (effect === E_CONDITION_EFFECTS.DISPLAY && isMet) ||
           effect !== E_CONDITION_EFFECTS.DISPLAY ? (
           <Grid key={field} item xs={fieldUiSettings.columns ?? 12}>
             <FieldComponent
               customProperties={customProperties}
-              loading={loading}
               fieldId={field}
               fieldType={fieldType}
+              loading={loading}
               uiSettings={uiSettingsWithConditionsApplied}
               validation={validationRules}
             />

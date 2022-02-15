@@ -86,6 +86,10 @@
             },
             "pattern": {
               "type": "string"
+            },
+            "validationFunctions": {
+              "type": "array",
+              "items": "string"
             }
           },
           "additionalProperties": false
