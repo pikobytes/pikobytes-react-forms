@@ -66,6 +66,11 @@ export interface IDefaultUiSettings {
 export interface IOutsideRegisterAllowedProperties {
     registerReturn?: UseFormRegisterReturn;
 }
+export interface IDatePicker<T> extends IGenericField<T, IDatePickerCustomProperties> {
+}
+export interface IDatePickerCustomProperties {
+    disableFuture?: boolean;
+}
 export interface ITextField<T> extends IGenericField<T, ITextFieldCustomProperties> {
 }
 export interface ITextFieldCustomProperties extends IOutsideRegisterAllowedProperties {

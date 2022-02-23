@@ -8,6 +8,7 @@ import React from 'react';
 import Select from '../components/Inputs/Select/Select';
 import TextField from '../components/Inputs/TextField/TextField';
 import TagManagementContainer from '../components/Inputs/TagManagement/TagManagementContainer';
+import Checkbox from '../components/Inputs/Checkbox/Checkbox';
 import DatePicker from '../components/Inputs/DatePicker/DatePicker';
 import { IDefaultUiSettings, IGenericField } from '../typedefs/FieldConfiguration';
 export declare const mapField: (fieldType: string, customMapping?: {
@@ -23,4 +24,4 @@ export declare const mapCustomFields: (fieldType: string, customMapping: {
  * Maps a field type to a corresponding field component
  * @param fieldType
  */
-export declare const mapDefaultFields: (fieldType: string) => typeof Select | typeof TagManagementContainer | typeof DatePicker | typeof TextField | undefined;
+export declare const mapDefaultFields: (fieldType: string) => typeof Checkbox | typeof Select | typeof TagManagementContainer | typeof DatePicker | typeof TextField | undefined;

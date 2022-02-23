@@ -75,6 +75,14 @@ export interface IOutsideRegisterAllowedProperties {
 // Field specific configuration parameters
 //
 
+// Date(Time)Picker
+export interface IDatePicker<T>
+  extends IGenericField<T, IDatePickerCustomProperties> {}
+
+export interface IDatePickerCustomProperties {
+  disableFuture?: boolean;
+}
+
 // Textfield
 export interface ITextField<T>
   extends IGenericField<T, ITextFieldCustomProperties> {}

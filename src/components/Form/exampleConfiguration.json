@@ -7,7 +7,7 @@
     }
   },
   "captureTimestamp": {
-    "fieldType": "datetime-local",
+    "fieldType": "datetime",
     "validation": {
       "required": true
     }

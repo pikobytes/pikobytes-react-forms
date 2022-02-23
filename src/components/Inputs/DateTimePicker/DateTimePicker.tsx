@@ -11,6 +11,7 @@ import { DateTimePicker as MUIDateTimePicker } from '@mui/lab';
 import { useController, useFormContext } from 'react-hook-form';
 
 import {
+  IDatePicker,
   IDefaultUiSettings,
   IGenericField,
 } from '../../../typedefs/FieldConfiguration';
@@ -21,10 +22,11 @@ import {
 } from '../util';
 
 export function DateTimePicker({
+  customProperties,
   fieldId,
   uiSettings: { disabled, description, label, placeholder, size, variant },
   validation,
-}: IGenericField<IDefaultUiSettings, undefined>) {
+}: IDatePicker<IDefaultUiSettings>) {
   const { field } = useController({
     name: fieldId,
     rules: Object.assign({ disabled }, validation),
@@ -33,6 +35,8 @@ export function DateTimePicker({
   const { formState } = useFormContext();
   const { required } = validation;
   const { errors } = formState;
+
+  const { disableFuture } = customProperties ?? { disableFuture: false };
 
   // derived state
   const error = errors[fieldId];
@@ -55,8 +59,10 @@ export function DateTimePicker({
 
   return (
     <MUIDateTimePicker
+      ampm={false}
       clearable
       disabled={disabled}
+      disableFuture={disableFuture}
       renderInput={(props) => (
         <TextField
           {...props}
@@ -68,8 +74,6 @@ export function DateTimePicker({
           variant={variant}
         />
       )}
-      ampm={false}
-      disableFuture
       inputFormat="yyyy/MM/dd, HH:mm"
       mask="____/__/__, __:__"
       InputProps={{
