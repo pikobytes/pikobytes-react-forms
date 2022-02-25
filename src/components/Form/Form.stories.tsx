@@ -22,7 +22,7 @@ export function FormProviderWrapper({
   defaultValues,
 }: {
   children: JSX.Element;
-  defaultValues: { [key: string]: string };
+  defaultValues?: { [key: string]: string };
 }) {
   const methods = useForm({ defaultValues });
 
