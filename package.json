@@ -1,13 +1,23 @@
 {
-  "name": "pikobytes-react-forms",
+  "name": "@pikobytes/pikobytes-react-forms",
   "version": "0.1.2",
-  "private": true,
   "main": "./lib/index.js",
   "module": "./lib/index.js",
   "types": "./lib/index.d.ts",
   "files": [
     "/lib"
   ],
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pikobytes/pikobytes-react-forms.git"
+  },
+  "bugs": {
+    "url": "https://github.com/pikobytes/pikobytes-react-forms/issues"
+  },
+  "homepage": "https://github.com/pikobytes/pikobytes-react-forms#readme",
   "dependencies": {
     "@testing-library/react": "^12.1.2",
     "@testing-library/user-event": "^13.5.0",
