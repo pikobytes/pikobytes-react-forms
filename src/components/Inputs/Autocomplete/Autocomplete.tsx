@@ -13,7 +13,6 @@ import parse from 'autosuggest-highlight/parse';
 import match from 'autosuggest-highlight/match';
 
 
-
 export const Autocomplete = ({
                                customProperties: { options, registerReturn },
                                fieldId,
@@ -36,7 +35,7 @@ export const Autocomplete = ({
 
 
   const handleChange = (e: any, newValue: any, reason: string) => {
-    onChange(newValue.value);
+    onChange(newValue?.value ?? '');
   };
 
   const { formState } = useFormContext();
