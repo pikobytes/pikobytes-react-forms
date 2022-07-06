@@ -15,5 +15,9 @@
   "dataType": {
     "format": "string",
     "label": "Daten-Art"
+  },
+  "country": {
+    "label": "Land",
+    "placeholder": "Wählen sie ein Land aus ..."
   }
 }

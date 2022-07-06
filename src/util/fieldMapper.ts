@@ -16,6 +16,7 @@ import {
   IDefaultUiSettings,
   IGenericField,
 } from '../typedefs/FieldConfiguration';
+import Autocomplete from '../components/Inputs/Autocomplete/Autocomplete';
 
 export const mapField = (
   fieldType: string,
@@ -62,6 +63,8 @@ export const mapCustomFields = (
  */
 export const mapDefaultFields = (fieldType: string) => {
   switch (fieldType) {
+    case FIELD_TYPES.AUTOCOMPLETE:
+      return Autocomplete;
     case FIELD_TYPES.BOOL:
     case FIELD_TYPES.BOOLEAN:
       return Checkbox;

@@ -5,7 +5,7 @@
  * file 'LICENSE.txt', which is part of this source code package.
  */
 export declare enum FIELD_TYPES {
-    AUTOSUGGEST = "autosuggest",
+    AUTOCOMPLETE = "autocomplete",
     DATETIME = "datetime",
     DATE = "date",
     NUMBER = "number",

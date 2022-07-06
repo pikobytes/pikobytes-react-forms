@@ -6,7 +6,7 @@
  */
 import { E_CONDITION_EFFECTS, IFieldCondition } from '../../../typedefs/ConditionalFields';
 import { TFieldValue, TStringIndexableObject } from '../../../typedefs/typedefs';
-export declare const applyConditions: (fieldValues: TStringIndexableObject<string | number>, conditions?: TStringIndexableObject<IFieldCondition> | undefined) => {
+export declare const applyConditions: (fieldValues: TStringIndexableObject<string | number>, conditions?: TStringIndexableObject<IFieldCondition>) => {
     effect: E_CONDITION_EFFECTS;
     isMet: boolean;
 };

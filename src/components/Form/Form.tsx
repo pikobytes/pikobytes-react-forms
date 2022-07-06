@@ -41,7 +41,7 @@ export interface IFormProps {
   };
   loadingFields?: Array<string>;
   onError: (
-    errors: TStringIndexableObject<FieldError>,
+    errors: TStringIndexableObject<FieldError | undefined>,
     values: TStringIndexableObject<string>
   ) => void;
   onPublishValues?: (

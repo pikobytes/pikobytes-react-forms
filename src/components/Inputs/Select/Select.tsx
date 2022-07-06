@@ -26,7 +26,7 @@ import {
   shouldShowRequiredLabel,
 } from '../util';
 
-const EMPTY_VALUE = 'none';
+export const EMPTY_VALUE = 'none';
 
 export default function Select({
   customProperties: { options, registerReturn },

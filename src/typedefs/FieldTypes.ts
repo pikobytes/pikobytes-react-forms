@@ -6,7 +6,7 @@
  */
 
 export enum FIELD_TYPES {
-    AUTOSUGGEST = 'autosuggest',
+    AUTOCOMPLETE = 'autocomplete',
     DATETIME = 'datetime',
     DATE = 'date',
     NUMBER = 'number',

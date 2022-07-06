@@ -7,7 +7,7 @@ export declare const getDefaultValues: (initialValues: TStringIndexableObject<st
 } & TStringIndexableObject<string | boolean> & TStringIndexableObject<string>;
 export declare const getDefaultValueForFieldType: (fieldType: FIELD_TYPES) => false | "";
 export declare const getDependentOnFields: (fieldConfigs: IFieldConfig) => string[];
-export declare const resolveValidationFunctions: (validationFunctionLookup?: TValidationFunctionLookup | undefined, validationFunctions?: string[] | undefined) => {
+export declare const resolveValidationFunctions: (validationFunctionLookup?: TValidationFunctionLookup, validationFunctions?: Array<string>) => {
     validate: TValidationFunctionLookup;
 } | {
     validate?: undefined;

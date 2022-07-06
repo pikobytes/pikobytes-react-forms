@@ -28,6 +28,34 @@
       "required": true
     }
   },
+  "country": {
+    "options": [
+      {
+        "label": "Germany",
+        "value": "DE"
+      },
+      {
+        "label": "Luxemburg",
+        "value": "LE"
+      },
+      {
+        "label": "Österreich",
+        "value": "OE"
+      },
+      {
+        "label": "Schweiz",
+        "value": "CH"
+      },
+      {
+        "label": "Tschechien",
+        "value": "Tsch"
+      }
+    ],
+    "fieldType": "autocomplete",
+    "validation": {
+      "required": true
+    }
+  },
   "dataType": {
     "options": [
       {
