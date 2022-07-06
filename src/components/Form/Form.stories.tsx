@@ -47,6 +47,9 @@ Default.args = {
   onError: (e) => {
     console.log(e);
   },
+  onSubmit: (data) => {
+    console.log(data);
+  },
   configuration: exampleConfiguration,
   uiConfiguration: exampleUiConfiguration,
 };

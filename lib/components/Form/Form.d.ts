@@ -11,7 +11,7 @@ export interface IFormProps {
         [key: string]: string;
     };
     loadingFields?: Array<string>;
-    onError: (errors: TStringIndexableObject<FieldError>, values: TStringIndexableObject<string>) => void;
+    onError: (errors: TStringIndexableObject<FieldError | undefined>, values: TStringIndexableObject<string>) => void;
     onPublishValues?: (fieldValues: Array<string>, previousFieldValues: Array<string>, options: {
         setValue: (field: string, newValue: string) => void;
     }) => void;

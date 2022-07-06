@@ -6,7 +6,7 @@
       "if": {
         "properties": {
           "fieldType": {
-            "const": "select"
+            "enum": ["select", "autocomplete"]
           }
         }
       },

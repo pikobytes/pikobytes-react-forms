@@ -5,6 +5,6 @@ import { Theme } from '@mui/material';
  * This file is subject to the terms and conditions defined in
  * file 'LICENSE.txt', which is part of this source code package.
  */
-export declare const shouldHighlightBackground: (value: string, required?: boolean | undefined, disabled?: boolean | undefined) => boolean | undefined;
-export declare const shouldShowRequiredLabel: (required?: boolean | undefined, disabled?: boolean | undefined) => boolean | undefined;
-export declare const getHighlightBackgroundColor: (theme: Theme, highlightBackground?: boolean | undefined) => string;
+export declare const shouldHighlightBackground: (value: string, required?: boolean, disabled?: boolean) => boolean | undefined;
+export declare const shouldShowRequiredLabel: (required?: boolean, disabled?: boolean) => boolean | undefined;
+export declare const getHighlightBackgroundColor: (theme: Theme, highlightBackground?: boolean) => string;

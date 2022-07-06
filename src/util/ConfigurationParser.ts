@@ -16,10 +16,11 @@ import {
 import { ISection, TStringIndexableObject } from '../typedefs/typedefs';
 
 const parseField = (
-  field: { fieldType: string } & TStringIndexableObject<any>
+  field: { fieldType: string } & TStringIndexableObject<any>,
 ) => {
   switch (field.fieldType) {
     case FIELD_TYPES.SELECT:
+    case FIELD_TYPES.AUTOCOMPLETE:
       const newCustomProperties = Object.assign({}, field.customProperties, {
         options: field?.options,
       });
@@ -33,13 +34,11 @@ const parseField = (
 };
 
 const parseSpecialConfigurationFields = (validConfiguration: any) => {
-  const parsedConfiguration: TStringIndexableObject<
-    IParsedGenericField<any, any>
-  > = {};
+  const parsedConfiguration: TStringIndexableObject<IParsedGenericField<any, any>> = {};
 
   Object.keys(validConfiguration).forEach((field) => {
     parsedConfiguration[field] = parseField(
-      validConfiguration[field]
+      validConfiguration[field],
     ) as IParsedGenericField<any, any>;
   });
 
@@ -69,7 +68,7 @@ export const validateUiConfiguration = (configuration: any) => {
 export const validateFieldConfiguration = (configuration: any) => {
   const validConfiguration = validateConfiguration(
     configuration,
-    configurationSchema
+    configurationSchema,
   );
 
   return parseSpecialConfigurationFields(validConfiguration) as {
