@@ -14,7 +14,7 @@ import match from 'autosuggest-highlight/match';
 
 
 export const Autocomplete = ({
-                               customProperties: { options, registerReturn },
+                               customProperties: { options = [], registerReturn },
                                fieldId,
                                uiSettings: { disabled, description, label, placeholder, size, variant },
                                validation,
@@ -55,25 +55,25 @@ export const Autocomplete = ({
 
 
   return <MUIAutocomplete
-    fullWidth
-    size={size}
     disabled={disabled}
+    fullWidth
     id='combo-box-demo'
     options={options}
+    onBlur={onBlur}
     onChange={handleChange}
-    renderInput={(params) => <TextField
-      {...params}
-      error={isErroneous}
-      helperText={isErroneous ? error!.message : description}
-      label={label}
-      placeholder={placeholder}
-      InputLabelProps={{ required: showRequiredLabel, shrink: true }}
-      onBlur={onBlur}
-      inputRef={ref}
-      variant={variant}
-      key={fieldId}
-      name={fieldId}
-    />}
+    renderInput={(params) => {
+      return <TextField
+        {...params}
+        error={isErroneous}
+        helperText={isErroneous ? error!.message : description}
+        InputLabelProps={{ required: showRequiredLabel, shrink: true }}
+        key={fieldId}
+        label={label}
+        name={fieldId}
+        placeholder={placeholder}
+        variant={variant}
+      />;
+    }}
     renderOption={(props, option, { inputValue }) => {
       const matches = match(option.label, inputValue);
       const parts = parse(option.label, matches);
@@ -95,12 +95,14 @@ export const Autocomplete = ({
         </li>
       );
     }}
+    size={size}
     sx={(theme) => ({
       backgroundColor: getHighlightBackgroundColor(
         theme,
         highlightBackground,
       ),
     })}
+    value={options.find(option => option.value === value) ?? null}
   />;
 };
 

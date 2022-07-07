@@ -18,9 +18,9 @@ export default {
 };
 
 export function FormProviderWrapper({
-  children,
-  defaultValues,
-}: {
+                                      children,
+                                      defaultValues,
+                                    }: {
   children: JSX.Element;
   defaultValues?: { [key: string]: string };
 }) {
@@ -33,7 +33,7 @@ function Template(args: any) {
   return (
     <>
       <Form {...args} />
-      <button form="test" type="submit">
+      <button form='test' type='submit'>
         Submit
       </button>
     </>
@@ -49,6 +49,27 @@ Default.args = {
   },
   onSubmit: (data) => {
     console.log(data);
+  },
+  configuration: exampleConfiguration,
+  uiConfiguration: exampleUiConfiguration,
+};
+
+// with initial values
+export const InitialValues = Template.bind({});
+// @ts-ignore
+InitialValues.args = {
+  formId: 'test_initial_values',
+  onError: (e) => {
+    console.log(e);
+  },
+  onSubmit: (data) => {
+    console.log(data);
+  },
+  initialValues: {
+    sensor: '1',
+    title: 'Initial Title',
+    country: 'DE',
+    dataType: '1',
   },
   configuration: exampleConfiguration,
   uiConfiguration: exampleUiConfiguration,
