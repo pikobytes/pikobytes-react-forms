@@ -8,6 +8,10 @@
     "format": "datetime-local",
     "label": "Aufnahmezeitpunkt"
   },
+  "country_solo": {
+    "label": "Land",
+    "placeholder": "Wählen sie ein Land aus oder geben ein neues ein"
+  },
   "sensor": {
     "format": "string",
     "label": "Sensor"

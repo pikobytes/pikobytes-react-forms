@@ -5,24 +5,22 @@
  * file 'LICENSE.txt', which is part of this source code package.
  */
 import { Autocomplete as MUIAutocomplete, TextField } from '@mui/material';
+import match from 'autosuggest-highlight/match';
+import parse from 'autosuggest-highlight/parse';
+import { useController, useFormContext } from 'react-hook-form';
 import {
   IAutocompleteCustomProperties,
   IDefaultUiSettings,
   IGenericField,
-  ISelectCustomProperties,
 } from '../../../typedefs/FieldConfiguration';
-import React from 'react';
-import { useController, useFormContext } from 'react-hook-form';
 import {
   getHighlightBackgroundColor,
   shouldHighlightBackground,
   shouldShowRequiredLabel,
 } from '../util';
-import parse from 'autosuggest-highlight/parse';
-import match from 'autosuggest-highlight/match';
 
 export const Autocomplete = ({
-  customProperties: { options = [], registerReturn, ...rest },
+  customProperties: { options = [], registerReturn, freeSolo, ...rest },
   fieldId,
   uiSettings: { disabled, description, label, placeholder, size, variant },
   validation,
@@ -41,7 +39,12 @@ export const Autocomplete = ({
   const { onChange, onBlur, ref, value } = field;
 
   const handleChange = (e: any, newValue: any, reason: string) => {
-    onChange(newValue?.value ?? '');
+    if (typeof newValue === 'string') {
+      // in free solo mode this will be a string
+      onChange(newValue ?? '');
+    } else {
+      onChange(newValue?.value ?? '');
+    }
   };
 
   const { formState } = useFormContext();
@@ -59,15 +62,21 @@ export const Autocomplete = ({
     disabled
   );
 
+  const handleInputChange = (event: any, value: string, reason: string) => {
+    onChange(value);
+  };
+
   return (
     <MUIAutocomplete
       {...rest}
       disabled={disabled}
+      freeSolo={freeSolo}
       fullWidth
       id="combo-box-demo"
       options={options}
       onBlur={onBlur}
       onChange={handleChange}
+      onInputChange={freeSolo ? handleInputChange : undefined}
       renderInput={(params) => {
         return (
           <TextField
