@@ -24,4 +24,4 @@ export declare const mapCustomFields: (fieldType: string, customMapping: {
  * Maps a field type to a corresponding field component
  * @param fieldType
  */
-export declare const mapDefaultFields: (fieldType: string) => (({ customProperties: { options, registerReturn, ...rest }, fieldId, uiSettings: { disabled, description, label, placeholder, size, variant }, validation, }: IGenericField<IDefaultUiSettings, import("../typedefs/FieldConfiguration").IAutocompleteCustomProperties>) => JSX.Element) | typeof Checkbox | typeof Select | typeof TagManagementContainer | typeof DatePicker | typeof TextField | undefined;
+export declare const mapDefaultFields: (fieldType: string) => (({ customProperties: { options, registerReturn, freeSolo, ...rest }, fieldId, uiSettings: { disabled, description, label, placeholder, size, variant }, validation, }: IGenericField<IDefaultUiSettings, import("../typedefs/FieldConfiguration").IAutocompleteCustomProperties>) => JSX.Element) | typeof Checkbox | typeof Select | typeof TagManagementContainer | typeof DatePicker | typeof TextField | undefined;

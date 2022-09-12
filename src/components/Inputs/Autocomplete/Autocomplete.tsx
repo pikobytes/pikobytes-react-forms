@@ -76,6 +76,7 @@ export const Autocomplete = ({
       options={options}
       onBlur={onBlur}
       onChange={handleChange}
+      inputValue={freeSolo ? value : undefined}
       onInputChange={freeSolo ? handleInputChange : undefined}
       renderInput={(params) => {
         return (

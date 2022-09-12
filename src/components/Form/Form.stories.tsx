@@ -18,9 +18,9 @@ export default {
 };
 
 export function FormProviderWrapper({
-                                      children,
-                                      defaultValues,
-                                    }: {
+  children,
+  defaultValues,
+}: {
   children: JSX.Element;
   defaultValues?: { [key: string]: string };
 }) {
@@ -33,7 +33,7 @@ function Template(args: any) {
   return (
     <>
       <Form {...args} />
-      <button form='test' type='submit'>
+      <button form="test" type="submit">
         Submit
       </button>
     </>
@@ -69,6 +69,7 @@ InitialValues.args = {
     sensor: '1',
     title: 'Initial Title',
     country: 'DE',
+    country_solo: 'Germany',
     dataType: '1',
   },
   configuration: exampleConfiguration,
