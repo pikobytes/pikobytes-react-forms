@@ -10,6 +10,7 @@ import { TSize, TStringIndexableObject, TValidationFunctionLookup, TVariant } fr
 import { UseFormRegisterReturn } from 'react-hook-form';
 import { ERROR_MESSAGE_KEY } from './ErrorMessages';
 import { IFieldCondition } from './ConditionalFields';
+import { AutocompleteProps } from '@mui/material';
 export declare type IFieldConfig = TStringIndexableObject<IParsedGenericField<any, any>>;
 export interface IValidation {
     required: boolean | ERROR_MESSAGE_KEY;
@@ -82,6 +83,8 @@ export interface ITextFieldCustomProperties extends IOutsideRegisterAllowedPrope
 export interface ISelectCustomProperties extends IOutsideRegisterAllowedProperties {
     defaultValue: string;
     options: Array<IOption>;
+}
+export interface IAutocompleteCustomProperties extends Omit<AutocompleteProps<IOption, boolean | undefined, boolean | undefined, boolean | undefined>, 'renderInput'>, IOutsideRegisterAllowedProperties {
 }
 export interface ITagManagement<T> extends IGenericField<T, ISpecialEditBehaviorProperties> {
 }

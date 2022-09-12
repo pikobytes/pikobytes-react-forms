@@ -15,6 +15,7 @@ import {
 import { UseFormRegisterReturn } from 'react-hook-form';
 import { ERROR_MESSAGE_KEY } from './ErrorMessages';
 import { IFieldCondition } from './ConditionalFields';
+import { AutocompleteProps } from '@mui/material';
 
 export type IFieldConfig = TStringIndexableObject<
   IParsedGenericField<any, any>
@@ -101,6 +102,19 @@ export interface ISelectCustomProperties
   defaultValue: string;
   options: Array<IOption>;
 }
+
+// Autocomplete
+export interface IAutocompleteCustomProperties
+  extends Omit<
+      AutocompleteProps<
+        IOption,
+        boolean | undefined,
+        boolean | undefined,
+        boolean | undefined
+      >,
+      'renderInput'
+    >,
+    IOutsideRegisterAllowedProperties {}
 
 // TagManagement
 
