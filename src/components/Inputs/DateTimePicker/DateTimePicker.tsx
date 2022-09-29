@@ -50,8 +50,11 @@ export function DateTimePicker({
   const showRequiredLabel = shouldShowRequiredLabel(isRequired, disabled);
 
   const handleChange = (dateTimeObject: any) => {
+    console.log(dateTimeObject);
     if (dateTimeObject !== null && !isNaN(dateTimeObject.getTime())) {
       onChange(dateTimeObject.toISOString());
+    } else {
+      onChange('');
     }
   };
 

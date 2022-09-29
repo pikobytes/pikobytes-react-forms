@@ -8,6 +8,10 @@
     "format": "datetime-local",
     "label": "Aufnahmezeitpunkt"
   },
+  "captureDate": {
+    "format": "date",
+    "label": "Test"
+  },
   "country_solo": {
     "label": "Land",
     "placeholder": "Wählen sie ein Land aus oder geben ein neues ein"

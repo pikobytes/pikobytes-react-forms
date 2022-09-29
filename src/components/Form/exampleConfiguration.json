@@ -12,6 +12,12 @@
       "required": true
     }
   },
+  "captureDate": {
+    "fieldType": "date",
+    "validation": {
+      "required": true
+    }
+  },
   "sensor": {
     "options": [
       {

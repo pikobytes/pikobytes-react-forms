@@ -89,6 +89,29 @@ Default.args = {
   },
 };
 
+configWithCustomValidation.captureTimestamp.validation = {
+  required: true,
+};
+
+export const WithWatchedValues = Template.bind({});
+// @ts-ignore
+Default.args = {
+  initialValues: { captureTimestamp: '2022-12-12T12:00:00Z' },
+  formId: 'test',
+  onError: (e) => {
+    console.log(e);
+  },
+  onSubmit: (data) => {
+    console.log(data);
+  },
+  configuration: configWithCustomValidation,
+  uiConfiguration: exampleUiConfiguration,
+  fieldsToWatch: ['captureTimestamp'],
+  onPublishValues: (values, previousValues) => {
+    console.log(values, previousValues);
+  },
+};
+
 // with initial values
 export const InitialValues = Template.bind({});
 // @ts-ignore

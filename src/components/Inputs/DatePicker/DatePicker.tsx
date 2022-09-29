@@ -4,7 +4,6 @@
  * This file is subject to the terms and conditions defined in
  * file 'LICENSE.txt', which is part of this source code package.
  */
-import React from 'react';
 import { TextField } from '@mui/material';
 import { DatePicker as MUIDatePicker } from '@mui/x-date-pickers';
 import { useController, useFormContext } from 'react-hook-form';
@@ -49,6 +48,14 @@ export function DatePicker({
   );
   const showRequiredLabel = shouldShowRequiredLabel(isRequired, disabled);
 
+  const handleChange = (dateTimeObject: any) => {
+    if (dateTimeObject !== null && !isNaN(dateTimeObject.getTime())) {
+      onChange(dateTimeObject.toISOString());
+    } else {
+      onChange('');
+    }
+  };
+
   return (
     <MUIDatePicker
       clearable
@@ -79,14 +86,7 @@ export function DatePicker({
       inputRef={ref}
       label={label}
       value={value === '' ? null : value}
-      onChange={(dateTimeObject) => {
-        if (dateTimeObject !== null && !isNaN(dateTimeObject.getTime())) {
-          // publish string to form state instead of datetime object
-
-          // @ts-ignore
-          onChange(dateTimeObject.toISOString().split('T')[0]);
-        }
-      }}
+      onChange={handleChange}
       {...rest}
     />
   );
