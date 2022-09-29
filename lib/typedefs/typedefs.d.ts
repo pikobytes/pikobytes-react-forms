@@ -17,5 +17,5 @@ export declare type TStringIndexableObject<T> = {
     [k: string]: T;
 };
 export declare type TVariant = 'filled' | 'outlined' | 'standard';
-export declare type TValidationFunction = (v: any) => boolean | string;
+export declare type TValidationFunction = (v: any) => boolean | string | undefined;
 export declare type TValidationFunctionLookup = TStringIndexableObject<TValidationFunction>;
