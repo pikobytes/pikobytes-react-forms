@@ -7,8 +7,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { FieldError, FormProvider, useForm } from 'react-hook-form';
 import { ErrorBoundary } from 'react-error-boundary';
-import AdapterDateFns from '@mui/lab/AdapterDateFns';
-import { LocalizationProvider } from '@mui/lab';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 
 import FormErrorFallback from '../FormErrorFallback/FormErrorFallback';
 import { usePrevious } from '../../util/hooks';

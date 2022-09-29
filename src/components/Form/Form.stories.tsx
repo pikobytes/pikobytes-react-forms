@@ -54,6 +54,41 @@ Default.args = {
   uiConfiguration: exampleUiConfiguration,
 };
 
+const configWithCustomValidation = Object.assign({}, exampleConfiguration);
+
+configWithCustomValidation.captureTimestamp.validation = {
+  required: true,
+  // @ts-ignore
+  validationFunctions: ['date'],
+};
+
+export const WithCustomValidation = Template.bind({});
+// @ts-ignore
+Default.args = {
+  formId: 'test',
+  onError: (e) => {
+    console.log(e);
+  },
+  onSubmit: (data) => {
+    console.log(data);
+  },
+  configuration: configWithCustomValidation,
+  uiConfiguration: exampleUiConfiguration,
+  validationFunctions: {
+    date: (value: string) => {
+      console.log(
+        'validate',
+        value !== undefined && new Date() > new Date(value)
+      );
+      if (value !== undefined && new Date() > new Date(value)) {
+        return 'Date must be in the future.';
+      } else {
+        return undefined;
+      }
+    },
+  },
+};
+
 // with initial values
 export const InitialValues = Template.bind({});
 // @ts-ignore

@@ -5,9 +5,8 @@
  * file 'LICENSE.txt', which is part of this source code package.
  */
 import React from 'react';
-import { IconButton, InputAdornment, TextField } from '@mui/material';
-import { Event } from '@mui/icons-material';
-import { DatePicker as MUIDatePicker } from '@mui/lab';
+import { TextField } from '@mui/material';
+import { DatePicker as MUIDatePicker } from '@mui/x-date-pickers';
 import { useController, useFormContext } from 'react-hook-form';
 
 import {
@@ -58,6 +57,7 @@ export function DatePicker({
       renderInput={(props) => (
         <TextField
           {...props}
+          error={isErroneous}
           InputLabelProps={{ required: showRequiredLabel, shrink: true }}
           fullWidth
           helperText={isErroneous ? error.message : description}
@@ -69,13 +69,6 @@ export function DatePicker({
       inputFormat="yyyy/MM/dd"
       mask="____/__/__"
       InputProps={{
-        endAdornment: (
-          <InputAdornment position="end">
-            <IconButton>
-              <Event />
-            </IconButton>
-          </InputAdornment>
-        ),
         sx: (theme) => ({
           backgroundColor: getHighlightBackgroundColor(
             theme,

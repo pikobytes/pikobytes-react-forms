@@ -4,16 +4,14 @@
  * This file is subject to the terms and conditions defined in
  * file 'LICENSE.txt', which is part of this source code package.
  */
-import React from 'react';
 import { IconButton, InputAdornment, TextField } from '@mui/material';
 import { Event } from '@mui/icons-material';
-import { DateTimePicker as MUIDateTimePicker } from '@mui/lab';
+import { DateTimePicker as MUIDateTimePicker } from '@mui/x-date-pickers';
 import { useController, useFormContext } from 'react-hook-form';
 
 import {
   IDatePicker,
   IDefaultUiSettings,
-  IGenericField,
 } from '../../../typedefs/FieldConfiguration';
 import {
   getHighlightBackgroundColor,
@@ -68,6 +66,7 @@ export function DateTimePicker({
           {...props}
           InputLabelProps={{ required: showRequiredLabel, shrink: true }}
           fullWidth
+          error={isErroneous}
           helperText={isErroneous ? error.message : description}
           placeholder={placeholder}
           size={size}
@@ -77,13 +76,6 @@ export function DateTimePicker({
       inputFormat="yyyy/MM/dd, HH:mm"
       mask="____/__/__, __:__"
       InputProps={{
-        endAdornment: (
-          <InputAdornment position="end">
-            <IconButton>
-              <Event />
-            </IconButton>
-          </InputAdornment>
-        ),
         sx: (theme) => ({
           backgroundColor: getHighlightBackgroundColor(
             theme,
