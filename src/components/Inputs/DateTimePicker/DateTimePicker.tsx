@@ -4,8 +4,7 @@
  * This file is subject to the terms and conditions defined in
  * file 'LICENSE.txt', which is part of this source code package.
  */
-import { IconButton, InputAdornment, TextField } from '@mui/material';
-import { Event } from '@mui/icons-material';
+import { TextField } from '@mui/material';
 import { DateTimePicker as MUIDateTimePicker } from '@mui/x-date-pickers';
 import { useController, useFormContext } from 'react-hook-form';
 
@@ -50,7 +49,6 @@ export function DateTimePicker({
   const showRequiredLabel = shouldShowRequiredLabel(isRequired, disabled);
 
   const handleChange = (dateTimeObject: any) => {
-    console.log(dateTimeObject);
     if (dateTimeObject !== null && !isNaN(dateTimeObject.getTime())) {
       onChange(dateTimeObject.toISOString());
     } else {
