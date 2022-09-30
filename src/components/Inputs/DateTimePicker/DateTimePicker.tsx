@@ -6,6 +6,7 @@
  */
 import { TextField } from '@mui/material';
 import { DateTimePicker as MUIDateTimePicker } from '@mui/x-date-pickers';
+import { parseISO } from 'date-fns';
 import { useController, useFormContext } from 'react-hook-form';
 
 import {
@@ -86,7 +87,7 @@ export function DateTimePicker({
       }}
       inputRef={ref}
       label={label}
-      value={value === '' ? null : value}
+      value={value === '' ? null : parseISO(value)}
       onChange={handleChange}
       {...rest}
     />
